@@ -450,7 +450,9 @@
       var a = e.target.closest ? e.target.closest('a.lb') : null;
       if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      items = $$('a.lb[data-group="' + a.getAttribute('data-group') + '"]');
+      // pictures inside the highlight dialog form their own set; the hidden no-JS copies on the cards are left out
+      var inHl = !!a.closest('#hl-modal');
+      items = $$('a.lb[data-group="' + a.getAttribute('data-group') + '"]').filter(function (x) { return !!x.closest('#hl-modal') === inHl; });
       idx = Math.max(0, items.indexOf(a));
       opener = a;
       show();
@@ -480,6 +482,136 @@
       lbImg.removeAttribute('src');
       if (opener && opener.focus) opener.focus();
     });
+  }
+
+  /* ---------- highlight dialog: "See details" opens a copy of the card's story ---------- */
+  var hlDlg = $('#hl-modal');
+  if (hlDlg && typeof hlDlg.showModal === 'function') {
+    root.classList.add('hl-modal-on');
+    var hlScroll = $('#hlm-scroll'), hlMedia = $('#hlm-media'), hlKick = $('#hlm-kicker');
+    var hlBig = $('#hlm-big'), hlT = $('#hlm-t'), hlBody = $('#hlm-body');
+    var hlCloseBtn = $('#hlm-close'), hlWrap = $('#hlm-wrap');
+    var hlOpener = null, hlSkipFocus = false, hlClosing = false, hlTimer = 0;
+    var clearKids = function (el) { while (el.firstChild) el.removeChild(el.firstChild); };
+    var stagger = function (el, n) { el.style.setProperty('--i', String(n)); };
+
+    var fillHl = function (card) {
+      var id = card.getAttribute('data-hl');
+      var bigEl = $('.hl-big', card), titleEl = $('.hl-title', card), kickEl = $('.hl-kicker', card);
+      hlKick.textContent = kickEl ? kickEl.textContent : '';
+      hlBig.textContent = bigEl ? (bigEl.getAttribute('data-big') || '') : '';
+      hlT.textContent = titleEl ? titleEl.textContent : '';
+      clearKids(hlMedia);
+      clearKids(hlBody);
+      var wrapEl = $('.hl-media', card), cardImg = $('.hl-media img', card), src = '';
+      if (cardImg) {
+        src = cardImg.getAttribute('src');
+        var alt = cardImg.getAttribute('alt') || '';
+        var a = doc.createElement('a');
+        a.className = 'lb hlm-main' + (wrapEl && wrapEl.classList.contains('is-fig') ? ' is-fig' : '');
+        a.href = src;
+        a.setAttribute('data-group', 'hl-' + id);
+        a.setAttribute('data-title', hlT.textContent);
+        a.setAttribute('data-sub', alt);
+        a.setAttribute('data-alt', alt);
+        a.setAttribute('aria-haspopup', 'dialog');
+        a.setAttribute('aria-label', 'Enlarge picture: ' + alt);
+        var im = cardImg.cloneNode(true);
+        im.setAttribute('loading', 'eager');
+        a.appendChild(im);
+        var zoom = $('.zoom');
+        if (zoom) a.appendChild(zoom.cloneNode(true));
+        hlMedia.appendChild(a);
+      }
+      var pics = $('.hl-d-pics', card);
+      if (pics) {
+        var ul = pics.cloneNode(true);
+        $$('li', ul).forEach(function (li) {
+          var l = $('a.lb', li);
+          if (l && l.getAttribute('href') === src) { li.parentNode.removeChild(li); return; }
+          var i2 = $('img', li);
+          if (i2) i2.setAttribute('loading', 'eager');
+        });
+        if (ul.children.length) hlMedia.appendChild(ul);
+      }
+      var txt = $('.hl-d-text', card);
+      if (txt) Array.prototype.slice.call(txt.children).forEach(function (n) { hlBody.appendChild(n.cloneNode(true)); });
+      stagger(hlMedia, 0); stagger(hlKick, 1); stagger(hlBig.parentNode, 2);
+      Array.prototype.slice.call(hlBody.children).forEach(function (n, k) { stagger(n, k + 3); });
+    };
+
+    var openHl = function (id, from) {
+      var card = doc.getElementById('hl-' + id);
+      if (!card || hlDlg.open) return;
+      clearTimeout(hlTimer);
+      hlClosing = false;
+      hlDlg.classList.remove('is-closing');
+      fillHl(card);
+      hlOpener = from || $('.hl-sum', card);
+      hlSkipFocus = false;
+      root.classList.add('modal-open');
+      hlDlg.showModal();
+      hlScroll.scrollTop = 0;
+      hlScroll.focus({ preventScroll: true });
+    };
+    var finishHl = function () {
+      clearTimeout(hlTimer);
+      hlClosing = false;
+      if (hlDlg.open) hlDlg.close();
+    };
+    var closeHl = function (now) {
+      if (!hlDlg.open) return;
+      if (now === true || reduced) { finishHl(); return; }
+      if (hlClosing) return;
+      hlClosing = true;
+      hlDlg.classList.add('is-closing');
+      hlTimer = setTimeout(finishHl, 200);
+    };
+
+    doc.addEventListener('click', function (e) {
+      var t = e.target.closest ? e.target.closest('[data-hl-open]') : null;
+      if (!t || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();   // also stops the <details> from toggling
+      openHl(t.getAttribute('data-hl-open'), t);
+    });
+    hlCloseBtn.addEventListener('click', function () { closeHl(); });
+    hlDlg.addEventListener('cancel', function (e) { e.preventDefault(); closeHl(); });
+    hlDlg.addEventListener('click', function (e) {
+      if (e.target === hlDlg || e.target === hlWrap) closeHl();
+    });
+    // links to other sections: close the dialog first, then go there
+    hlBody.addEventListener('click', function (e) {
+      var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+      if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var id = a.getAttribute('href').slice(1);
+      if (!id || !doc.getElementById(id)) return;
+      e.preventDefault();
+      hlSkipFocus = true;
+      closeHl(true);
+      window.location.hash = id;
+    });
+    hlDlg.addEventListener('close', function () {
+      clearTimeout(hlTimer);
+      hlClosing = false;
+      hlDlg.classList.remove('is-closing');
+      root.classList.remove('modal-open');
+      clearKids(hlMedia);
+      clearKids(hlBody);
+      if (/^#hl-/.test(window.location.hash) && window.history && history.replaceState) {
+        try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (err) { /* ignore */ }
+      }
+      if (!hlSkipFocus && hlOpener && hlOpener.focus) hlOpener.focus({ preventScroll: true });
+      hlSkipFocus = false;
+    });
+    // a link like page.html#hl-toi opens that story
+    var hlFromHash = function () {
+      var m = /^#hl-([a-z0-9_-]+)$/i.exec(window.location.hash);
+      if (!m || hlDlg.open) return;
+      var card = doc.getElementById('hl-' + m[1]);
+      if (card && card.getAttribute('data-hl')) openHl(m[1], null);
+    };
+    window.addEventListener('hashchange', hlFromHash);
+    hlFromHash();
   }
 
   /* ---------- email: click to reveal (address is assembled here, never in the HTML) ---------- */

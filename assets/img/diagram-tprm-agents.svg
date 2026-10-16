@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="Third-party risk: two AI-agent prototypes" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef4fb"/>
+      <stop offset="1" stop-color="#e3eef6"/>
+    </linearGradient>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1aa38c"/>
+      <stop offset="1" stop-color="#3b82e0"/>
+    </linearGradient>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1 L9 5 L1 9 z" fill="#3b82e0"/>
+    </marker>
+  </defs>
+  <rect width="800" height="450" rx="22" fill="url(#bg)"/>
+  <rect x="0" y="0" width="800" height="8" rx="4" fill="url(#g1)" opacity=".9"/>
+  <text x="400" y="66" text-anchor="middle" font-size="27" font-weight="700" fill="#24324d">Third-party risk: two AI-agent prototypes</text>
+
+  <g>
+    <rect x="24" y="140" width="200" height="220" rx="18" fill="#ffffff" stroke="#1aa38c" stroke-width="3"/>
+    <circle cx="124" cy="206" r="30" fill="#1aa38c" opacity=".16"/>
+    <rect x="107" y="192" width="34" height="28" rx="8" fill="none" stroke="#1aa38c" stroke-width="3"/>
+    <circle cx="117" cy="206" r="3.2" fill="#1aa38c"/><circle cx="131" cy="206" r="3.2" fill="#1aa38c"/>
+    <path d="M124 192 v-8 M120 184 h8" stroke="#1aa38c" stroke-width="3" stroke-linecap="round"/>
+    <text x="124" y="282" text-anchor="middle" font-size="19" font-weight="700" fill="#24324d">Supplier-side</text>
+    <text x="124" y="308" text-anchor="middle" font-size="19" font-weight="700" fill="#24324d">agent</text>
+  </g>
+
+  <path d="M229 250 H265" stroke="#3b82e0" stroke-width="3.5" stroke-linecap="round" marker-end="url(#ah)"/>
+  <g>
+    <rect x="270" y="170" width="260" height="160" rx="16" fill="#ffffff" stroke="#3b82e0" stroke-width="2.5" stroke-dasharray="7 6"/>
+    <text x="400" y="222" text-anchor="middle" font-size="16" font-weight="600" fill="#24324d">Answers with evidence,</text>
+    <text x="400" y="250" text-anchor="middle" font-size="16" font-weight="600" fill="#24324d">reasoning and confidence</text>
+    <text x="400" y="278" text-anchor="middle" font-size="16" font-weight="600" fill="#1a7f6e">· flags gaps</text>
+  </g>
+  <path d="M535 250 H571" stroke="#3b82e0" stroke-width="3.5" stroke-linecap="round" marker-end="url(#ah)"/>
+
+  <g>
+    <rect x="576" y="140" width="200" height="220" rx="18" fill="#ffffff" stroke="#3b82e0" stroke-width="3"/>
+    <circle cx="676" cy="196" r="28" fill="#3b82e0" opacity=".16"/>
+    <rect x="659" y="183" width="34" height="28" rx="8" fill="none" stroke="#3b82e0" stroke-width="3"/>
+    <circle cx="669" cy="197" r="3.2" fill="#3b82e0"/><circle cx="683" cy="197" r="3.2" fill="#3b82e0"/>
+    <path d="M676 183 v-8 M672 175 h8" stroke="#3b82e0" stroke-width="3" stroke-linecap="round"/>
+    <text x="676" y="256" text-anchor="middle" font-size="16" font-weight="700" fill="#24324d">Buyer-side agent:</text>
+    <text x="676" y="279" text-anchor="middle" font-size="16" font-weight="700" fill="#24324d">guides the business</text>
+    <text x="676" y="302" text-anchor="middle" font-size="16" font-weight="700" fill="#24324d">owner through</text>
+    <text x="676" y="325" text-anchor="middle" font-size="16" font-weight="700" fill="#24324d">the assessment</text>
+  </g>
+</svg>
