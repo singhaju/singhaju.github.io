@@ -118,6 +118,107 @@
 
   var heroEl = $('#top');
 
+  /* ---------- hero terminal: types a few lines in random order ---------- */
+  (function () {
+    var term = $('#term'), body = $('#term-body'), btn = $('#term-pause'), dataEl = $('#term-data');
+    if (!term || !body || !dataEl || reduced) return;
+    var lines;
+    try { lines = JSON.parse(dataEl.textContent); } catch (e) { return; }
+    if (!lines || !lines.length) return;
+    var CHAR_MS = 34, OUT_MS = 300, HOLD_MS = 2500;
+    var timer = null, nextFn = null, userPaused = false, offscreen = false, hidden = !!doc.hidden;
+    var cursor = doc.createElement('span');
+    cursor.className = 'tm-cur';
+    var order = [], first = true, last = null, started = false;
+
+    function active() { return !userPaused && !offscreen && !hidden; }
+    function sched(fn, ms) {
+      nextFn = fn;
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (active()) timer = setTimeout(function () { timer = null; fn(); }, ms);
+    }
+    function refresh() {
+      if (active()) {
+        if (!timer && nextFn) { var f = nextFn; timer = setTimeout(function () { timer = null; f(); }, 0); }
+      } else if (timer) { clearTimeout(timer); timer = null; }
+    }
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t; }
+      return a;
+    }
+    function refill() {
+      var idx = lines.map(function (_, i) { return i; });
+      if (first) { order = [0].concat(shuffle(idx.slice(1))); first = false; return; }
+      order = shuffle(idx);
+      if (order.length > 1 && order[0] === last) { var t = order[0]; order[0] = order[1]; order[1] = t; }
+    }
+    function bangkokNow() {
+      try {
+        var p = {};
+        new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+          .formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+        return p.weekday + ' ' + p.day + ' ' + p.month + ' ' + p.year + ' · ' + p.hour + ':' + p.minute;
+      } catch (e) { return ''; }
+    }
+    // drop the oldest entries until the newest ones fit
+    function fit() {
+      var room = body.clientHeight - 20;
+      while (body.children.length > 1) {
+        var h = 0;
+        for (var i = 0; i < body.children.length; i++) h += body.children[i].offsetHeight + (i ? 8 : 0);
+        if (h <= room) break;
+        body.removeChild(body.firstChild);
+      }
+    }
+    function typeLine() {
+      if (!started) { body.textContent = ''; started = true; }
+      if (!order.length) refill();
+      var i = order.shift(); last = i;
+      var d = lines[i];
+      var ent = doc.createElement('div'); ent.className = 'tm-ent';
+      var cmd = doc.createElement('div'); cmd.className = 'tm-cmd';
+      var pr = doc.createElement('span'); pr.className = 'tm-prompt'; pr.textContent = '$';
+      var tx = doc.createElement('span'); tx.className = 'tm-text';
+      cmd.appendChild(pr); cmd.appendChild(doc.createTextNode(' ')); cmd.appendChild(tx); cmd.appendChild(cursor);
+      ent.appendChild(cmd); body.appendChild(ent);
+      fit();
+      var n = 0;
+      function typeChar() {
+        n++;
+        tx.textContent = d.c.slice(0, n);
+        if (n < d.c.length) sched(typeChar, CHAR_MS + ((Math.random() * 12) | 0));
+        else sched(showOut, OUT_MS);
+      }
+      function showOut() {
+        var out = doc.createElement('div'); out.className = 'tm-out';
+        var text = d.o;
+        if (d.d === 'date') { var now = bangkokNow(); if (now) text = now + ' · ' + d.o; }
+        out.textContent = text;
+        out.appendChild(cursor);
+        ent.appendChild(out);
+        fit();
+        sched(typeLine, HOLD_MS);
+      }
+      sched(typeChar, CHAR_MS);
+    }
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        userPaused = !userPaused;
+        btn.setAttribute('aria-pressed', userPaused ? 'true' : 'false');
+        btn.setAttribute('aria-label', btn.getAttribute(userPaused ? 'data-play' : 'data-pause') || '');
+        refresh();
+      });
+    }
+    doc.addEventListener('visibilitychange', function () { hidden = doc.hidden; refresh(); });
+    if (hasIO) {
+      new IntersectionObserver(function (es) {
+        offscreen = !es[es.length - 1].isIntersecting; refresh();
+      }, { threshold: 0.1 }).observe(term);
+    }
+    sched(typeLine, 400);
+  })();
+
   /* ---------- zero-trust network canvas ---------- */
   (function initNet() {
     var cv = $('#net');
