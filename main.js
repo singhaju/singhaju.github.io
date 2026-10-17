@@ -415,6 +415,95 @@
     });
   }
 
+  /* ---------- slideshows (phone / browser / figure / photo frames) ---------- */
+  $$('[data-slideshow]').forEach(function (ss) {
+    var tracks = $$('.ss-frame', ss).map(function (f) { return $$('.ss-slide', f); });
+    var caps = $$('.ss-cap-t', ss), dots = $$('.ss-dot', ss);
+    var prev = $('.ss-prev', ss), next = $('.ss-next', ss), pp = $('.ss-pp', ss);
+    if (!tracks.length) return;
+    var n = Math.max.apply(null, tracks.map(function (t) { return t.length; }));
+    if (tracks[0]) n = tracks[0].length;
+    var interval = parseInt(ss.getAttribute('data-interval'), 10) || 3500;
+    var cur = 0, timer = 0, hovering = false, inside = false, seen = !hasIO, tabOn = !doc.hidden, paused = reduced;
+    ss.classList.add('is-live');
+
+    function warm(k) {
+      tracks.forEach(function (sl) {
+        var im = sl[k % sl.length] && sl[k % sl.length].querySelector('img');
+        if (im && im.getAttribute('loading') === 'lazy') im.setAttribute('loading', 'eager');
+      });
+    }
+    function show(i) {
+      cur = (i + n) % n;
+      tracks.forEach(function (sl, t) {
+        var k = cur % sl.length;
+        sl.forEach(function (a, j) {
+          var on = j === k;
+          a.classList.toggle('is-active', on);
+          if (on) { a.removeAttribute('aria-hidden'); a.removeAttribute('tabindex'); }
+          else { a.setAttribute('aria-hidden', 'true'); a.setAttribute('tabindex', '-1'); }
+        });
+        if (caps[t]) caps[t].textContent = sl[k].getAttribute('data-alt') || '';
+      });
+      dots.forEach(function (d, j) { if (j === cur) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current'); });
+      warm(cur + 1);
+    }
+    function canRun() { return !paused && !hovering && !inside && seen && tabOn && n > 1 && !root.classList.contains('lb-open'); }
+    function sync() {
+      if (timer) { clearInterval(timer); timer = 0; }
+      ss.classList.toggle('is-paused', !canRun());
+      if (canRun()) timer = setInterval(function () { show(cur + 1); }, interval);
+    }
+    function setPaused(p) {
+      paused = p;
+      if (pp) {
+        pp.setAttribute('aria-pressed', p ? 'true' : 'false');
+        pp.setAttribute('aria-label', pp.getAttribute(p ? 'data-play' : 'data-pause'));
+        pp.classList.toggle('is-paused', p);
+      }
+      sync();
+    }
+    if (prev) prev.addEventListener('click', function () { show(cur - 1); sync(); });
+    if (next) next.addEventListener('click', function () { show(cur + 1); sync(); });
+    dots.forEach(function (d, j) { d.addEventListener('click', function () { show(j); sync(); }); });
+    if (pp) pp.addEventListener('click', function () { setPaused(!paused); });
+    ss.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { hovering = true; sync(); } });
+    ss.addEventListener('pointerleave', function () { hovering = false; sync(); });
+    ss.addEventListener('focusin', function () { inside = true; sync(); });
+    ss.addEventListener('focusout', function (e) { if (!ss.contains(e.relatedTarget)) { inside = false; sync(); } });
+    ss.addEventListener('click', function () { setTimeout(sync, 0); });
+    ss.addEventListener('keydown', function (e) {
+      if (e.target.closest && e.target.closest('.ss-ctl')) {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); show(cur - 1); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); show(cur + 1); }
+      }
+    });
+    doc.addEventListener('visibilitychange', function () { tabOn = !doc.hidden; sync(); });
+    doc.addEventListener('close', function () { sync(); }, true);
+    if (hasIO) new IntersectionObserver(function (en) { seen = en[0].isIntersecting; sync(); }, { threshold: 0.25 }).observe(ss);
+    if (mq.addEventListener) mq.addEventListener('change', function (e) { if (e.matches) setPaused(true); });
+    setPaused(paused);
+    show(0);
+  });
+
+  /* ---------- reference e-mail: assembled on click, shown as a mailto link ---------- */
+  $$('button[data-reveal="inline"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var addr;
+      try { addr = atob(btn.getAttribute('data-a')) + '@' + atob(btn.getAttribute('data-b')); } catch (e) { return; }
+      var link = doc.createElement('a');
+      link.className = 'ref-act ref-addr';
+      link.href = 'mailto:' + addr;
+      var ico = btn.querySelector('svg');
+      if (ico) link.appendChild(ico);
+      var sp = doc.createElement('span');
+      sp.textContent = addr;
+      link.appendChild(sp);
+      btn.parentNode.replaceChild(link, btn);
+      link.focus();
+    });
+  });
+
   /* ---------- email: click to reveal (address is assembled here, never in the HTML) ---------- */
   var revealBtn = $('#reveal-email');
   var emailOut = $('#email-out');
