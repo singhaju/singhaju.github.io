@@ -37,7 +37,6 @@
   /* ---------- header: scrolled state, progress bar, scroll-spy ---------- */
   var hdr = $('#site-header');
   var bar = $('#progress-bar');
-  var timeline = $('#timeline');
   var ticking = false;
   function onScroll() {
     if (ticking) return;
@@ -48,18 +47,10 @@
       var max = root.scrollHeight - window.innerHeight;
       if (bar) bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, Math.max(0, y / max)).toFixed(4) : 0) + ')';
       if (hdr) hdr.classList.toggle('scrolled', y > 8);
-      updateTimeline();
     });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
-
-  function updateTimeline() {
-    if (!timeline || reduced) return;
-    var r = timeline.getBoundingClientRect();
-    var p = (window.innerHeight * 0.62 - r.top) / Math.max(1, r.height);
-    timeline.style.setProperty('--tl', Math.max(0, Math.min(1, p)).toFixed(4));
-  }
 
   if (hasIO) {
     var spyLinks = {};
@@ -112,7 +103,7 @@
     reveals.forEach(function (el) { rvIO.observe(el); });
   }
 
-  /* ---------- lit-up sequences (How I work, research flows): play once when mostly visible ---------- */
+  /* ---------- lit-up sequences (case-study flows): play once when mostly visible ---------- */
   var lits = $$('.lit');
   if (!hasIO || reduced) {
     lits.forEach(function (el) { el.classList.add('in'); });
@@ -125,106 +116,7 @@
     lits.forEach(function (el) { litIO.observe(el); });
   }
 
-  /* ---------- hero: cycling roles line ---------- */
   var heroEl = $('#top');
-  var heroVisible = true;
-  if (hasIO && heroEl) {
-    new IntersectionObserver(function (en) { heroVisible = en[0].isIntersecting; }).observe(heroEl);
-  }
-  var rolesEl = $('#roles');
-  if (rolesEl && !reduced) {
-    var roles = [];
-    try { roles = JSON.parse(rolesEl.getAttribute('data-roles') || '[]'); } catch (e) { roles = []; }
-    if (roles.length > 1) {
-      var srList = doc.createElement('span');
-      srList.className = 'sr-only';
-      srList.textContent = roles.join(', ');
-      rolesEl.parentNode.appendChild(srList);
-      rolesEl.setAttribute('aria-hidden', 'true');
-      rolesEl.textContent = roles[0];
-      var ri = 0;
-      setInterval(function () {
-        if (doc.hidden || !heroVisible) return;
-        rolesEl.classList.add('out');
-        setTimeout(function () {
-          ri = (ri + 1) % roles.length;
-          rolesEl.textContent = roles[ri];
-          rolesEl.classList.remove('out');
-        }, 320);
-      }, 2800);
-    }
-  }
-
-  /* ---------- hero: terminal types once ---------- */
-  var term = $('#term');
-  if (term && !reduced && hasIO) {
-    var lines = $$('.tl-line-t', term).map(function (l) {
-      var cmd = $('.t-text', l), out = $('.t-out', l);
-      return { cmd: cmd, out: out, cmdText: cmd.textContent, outText: out.textContent };
-    });
-    term.style.minHeight = term.offsetHeight + 'px';
-    lines.forEach(function (l) { l.cmd.textContent = ''; l.out.textContent = ''; });
-    var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
-    var caret = doc.createElement('span');
-    caret.className = 'caret';
-    var typed = false;
-    var typeInto = function (el, text, delay, chunk) {
-      return new Promise(function (resolve) {
-        var i = 0;
-        (function tick() {
-          if (i >= text.length) return resolve();
-          i = Math.min(text.length, i + chunk);
-          el.textContent = text.slice(0, i);
-          el.parentNode.appendChild(caret);
-          setTimeout(tick, delay + Math.random() * delay * 0.6);
-        })();
-      });
-    };
-    var runTerm = function () {
-      if (typed) return;
-      typed = true;
-      (async function () {
-        for (var i = 0; i < lines.length; i++) {
-          var l = lines[i];
-          await sleep(i === 0 ? 350 : 220);
-          await typeInto(l.cmd, l.cmdText, 30, 1);
-          await sleep(160);
-          await typeInto(l.out, l.outText, 8, 3);
-        }
-        caret.parentNode && caret.parentNode.appendChild(caret);
-      })();
-    };
-    new IntersectionObserver(function (en, io) {
-      if (en[0].isIntersecting) { io.disconnect(); runTerm(); }
-    }, { threshold: 0.35 }).observe(term);
-  }
-
-  /* ---------- key numbers count up ---------- */
-  var nums = $$('.num[data-to]');
-  if (nums.length && !reduced && hasIO) {
-    var fmt = function (v, d) { return v.toFixed(d); };
-    nums.forEach(function (el) {
-      el.textContent = fmt(0, parseInt(el.getAttribute('data-dec') || '0', 10));
-    });
-    var cIO = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        cIO.unobserve(en.target);
-        var el = en.target;
-        var to = parseFloat(el.getAttribute('data-to'));
-        var dec = parseInt(el.getAttribute('data-dec') || '0', 10);
-        var dur = 1100, t0 = null;
-        (function step(ts) {
-          if (t0 === null) t0 = ts;
-          var p = Math.min(1, (ts - t0) / dur);
-          var e = 1 - Math.pow(1 - p, 4);
-          el.textContent = fmt(to * e, dec);
-          if (p < 1) requestAnimationFrame(step); else el.textContent = fmt(to, dec);
-        })(performance.now());
-      });
-    }, { threshold: 0.6 });
-    nums.forEach(function (el) { cIO.observe(el); });
-  }
 
   /* ---------- zero-trust network canvas ---------- */
   (function initNet() {
@@ -355,71 +247,6 @@
     doc.addEventListener('themechange', function () { readColors(); if (!running) draw(performance.now()); });
   })();
 
-  /* ---------- project filters ---------- */
-  var grid = $('#pgrid');
-  var filterBox = $('.filters');
-  if (grid && filterBox) {
-    var chips = $$('.fchip', filterBox);
-    var cards = $$('.pcard', grid);
-    var status = $('#filter-status');
-    var apply = function (f) {
-      chips.forEach(function (c) { c.setAttribute('aria-pressed', c.getAttribute('data-filter') === f ? 'true' : 'false'); });
-      var n = 0;
-      cards.forEach(function (c) {
-        var show = f === '*' || c.getAttribute('data-tags').split('|').indexOf(f) > -1;
-        c.hidden = !show;
-        if (show) {
-          n++;
-          if (!reduced) { c.classList.remove('in'); void c.offsetWidth; c.classList.add('in'); }
-        }
-      });
-      grid.classList.toggle('is-filtered', f !== '*');
-      if (status) status.textContent = 'Showing ' + n + ' of ' + cards.length + ' projects' + (f === '*' ? '.' : ' tagged ' + f + '.');
-    };
-    filterBox.addEventListener('click', function (e) {
-      var b = e.target.closest('.fchip');
-      if (b) apply(b.getAttribute('data-filter'));
-    });
-  }
-
-  /* ---------- journey scroller ---------- */
-  var jw = $('#journey');
-  var js = $('#j-scroller');
-  if (jw && js) {
-    var jp = $('#j-prev'), jn = $('#j-next');
-    var syncJ = function () {
-      var max = js.scrollWidth - js.clientWidth;
-      var atEnd = max <= 2 || js.scrollLeft >= max - 2;
-      jw.classList.toggle('at-end', atEnd);
-      jw.classList.toggle('scrolled', js.scrollLeft > 2);
-      if (jp) jp.disabled = js.scrollLeft <= 2;
-      if (jn) jn.disabled = atEnd;
-    };
-    var by = function (dir) { js.scrollBy({ left: dir * Math.max(240, js.clientWidth * 0.7), behavior: reduced ? 'auto' : 'smooth' }); };
-    if (jp) jp.addEventListener('click', function () { by(-1); });
-    if (jn) jn.addEventListener('click', function () { by(1); });
-    js.addEventListener('scroll', syncJ, { passive: true });
-    window.addEventListener('resize', syncJ);
-    // start at the newest years; older ones are one click back
-    js.scrollLeft = js.scrollWidth;
-    window.addEventListener('load', function () { js.scrollLeft = js.scrollWidth; syncJ(); });
-    syncJ();
-    if (hasIO && !reduced) {
-      jw.style.setProperty('--jl', '0');
-      var jIO = new IntersectionObserver(function (en) {
-        if (!en[0].isIntersecting) return;
-        jIO.disconnect();
-        var t0 = performance.now();
-        (function grow(ts) {
-          var p = Math.min(1, (ts - t0) / 1400);
-          jw.style.setProperty('--jl', (1 - Math.pow(1 - p, 3)).toFixed(4));
-          if (p < 1) requestAnimationFrame(grow);
-        })(t0);
-      }, { threshold: 0.3 });
-      jIO.observe(jw);
-    }
-  }
-
   /* ---------- lightbox (native dialog) ---------- */
   var dlg = $('#lightbox');
   if (dlg && typeof dlg.showModal === 'function') {
@@ -450,9 +277,7 @@
       var a = e.target.closest ? e.target.closest('a.lb') : null;
       if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      // pictures inside the highlight dialog form their own set; the hidden no-JS copies on the cards are left out
-      var inHl = !!a.closest('#hl-modal');
-      items = $$('a.lb[data-group="' + a.getAttribute('data-group') + '"]').filter(function (x) { return !!x.closest('#hl-modal') === inHl; });
+      items = $$('a.lb[data-group="' + a.getAttribute('data-group') + '"]');
       idx = Math.max(0, items.indexOf(a));
       opener = a;
       show();
@@ -482,136 +307,6 @@
       lbImg.removeAttribute('src');
       if (opener && opener.focus) opener.focus();
     });
-  }
-
-  /* ---------- highlight dialog: "See details" opens a copy of the card's story ---------- */
-  var hlDlg = $('#hl-modal');
-  if (hlDlg && typeof hlDlg.showModal === 'function') {
-    root.classList.add('hl-modal-on');
-    var hlScroll = $('#hlm-scroll'), hlMedia = $('#hlm-media'), hlKick = $('#hlm-kicker');
-    var hlBig = $('#hlm-big'), hlT = $('#hlm-t'), hlBody = $('#hlm-body');
-    var hlCloseBtn = $('#hlm-close'), hlWrap = $('#hlm-wrap');
-    var hlOpener = null, hlSkipFocus = false, hlClosing = false, hlTimer = 0;
-    var clearKids = function (el) { while (el.firstChild) el.removeChild(el.firstChild); };
-    var stagger = function (el, n) { el.style.setProperty('--i', String(n)); };
-
-    var fillHl = function (card) {
-      var id = card.getAttribute('data-hl');
-      var bigEl = $('.hl-big', card), titleEl = $('.hl-title', card), kickEl = $('.hl-kicker', card);
-      hlKick.textContent = kickEl ? kickEl.textContent : '';
-      hlBig.textContent = bigEl ? (bigEl.getAttribute('data-big') || '') : '';
-      hlT.textContent = titleEl ? titleEl.textContent : '';
-      clearKids(hlMedia);
-      clearKids(hlBody);
-      var wrapEl = $('.hl-media', card), cardImg = $('.hl-media img', card), src = '';
-      if (cardImg) {
-        src = cardImg.getAttribute('src');
-        var alt = cardImg.getAttribute('alt') || '';
-        var a = doc.createElement('a');
-        a.className = 'lb hlm-main' + (wrapEl && wrapEl.classList.contains('is-fig') ? ' is-fig' : '');
-        a.href = src;
-        a.setAttribute('data-group', 'hl-' + id);
-        a.setAttribute('data-title', hlT.textContent);
-        a.setAttribute('data-sub', alt);
-        a.setAttribute('data-alt', alt);
-        a.setAttribute('aria-haspopup', 'dialog');
-        a.setAttribute('aria-label', 'Enlarge picture: ' + alt);
-        var im = cardImg.cloneNode(true);
-        im.setAttribute('loading', 'eager');
-        a.appendChild(im);
-        var zoom = $('.zoom');
-        if (zoom) a.appendChild(zoom.cloneNode(true));
-        hlMedia.appendChild(a);
-      }
-      var pics = $('.hl-d-pics', card);
-      if (pics) {
-        var ul = pics.cloneNode(true);
-        $$('li', ul).forEach(function (li) {
-          var l = $('a.lb', li);
-          if (l && l.getAttribute('href') === src) { li.parentNode.removeChild(li); return; }
-          var i2 = $('img', li);
-          if (i2) i2.setAttribute('loading', 'eager');
-        });
-        if (ul.children.length) hlMedia.appendChild(ul);
-      }
-      var txt = $('.hl-d-text', card);
-      if (txt) Array.prototype.slice.call(txt.children).forEach(function (n) { hlBody.appendChild(n.cloneNode(true)); });
-      stagger(hlMedia, 0); stagger(hlKick, 1); stagger(hlBig.parentNode, 2);
-      Array.prototype.slice.call(hlBody.children).forEach(function (n, k) { stagger(n, k + 3); });
-    };
-
-    var openHl = function (id, from) {
-      var card = doc.getElementById('hl-' + id);
-      if (!card || hlDlg.open) return;
-      clearTimeout(hlTimer);
-      hlClosing = false;
-      hlDlg.classList.remove('is-closing');
-      fillHl(card);
-      hlOpener = from || $('.hl-sum', card);
-      hlSkipFocus = false;
-      root.classList.add('modal-open');
-      hlDlg.showModal();
-      hlScroll.scrollTop = 0;
-      hlScroll.focus({ preventScroll: true });
-    };
-    var finishHl = function () {
-      clearTimeout(hlTimer);
-      hlClosing = false;
-      if (hlDlg.open) hlDlg.close();
-    };
-    var closeHl = function (now) {
-      if (!hlDlg.open) return;
-      if (now === true || reduced) { finishHl(); return; }
-      if (hlClosing) return;
-      hlClosing = true;
-      hlDlg.classList.add('is-closing');
-      hlTimer = setTimeout(finishHl, 200);
-    };
-
-    doc.addEventListener('click', function (e) {
-      var t = e.target.closest ? e.target.closest('[data-hl-open]') : null;
-      if (!t || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      e.preventDefault();   // also stops the <details> from toggling
-      openHl(t.getAttribute('data-hl-open'), t);
-    });
-    hlCloseBtn.addEventListener('click', function () { closeHl(); });
-    hlDlg.addEventListener('cancel', function (e) { e.preventDefault(); closeHl(); });
-    hlDlg.addEventListener('click', function (e) {
-      if (e.target === hlDlg || e.target === hlWrap) closeHl();
-    });
-    // links to other sections: close the dialog first, then go there
-    hlBody.addEventListener('click', function (e) {
-      var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
-      if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      var id = a.getAttribute('href').slice(1);
-      if (!id || !doc.getElementById(id)) return;
-      e.preventDefault();
-      hlSkipFocus = true;
-      closeHl(true);
-      window.location.hash = id;
-    });
-    hlDlg.addEventListener('close', function () {
-      clearTimeout(hlTimer);
-      hlClosing = false;
-      hlDlg.classList.remove('is-closing');
-      root.classList.remove('modal-open');
-      clearKids(hlMedia);
-      clearKids(hlBody);
-      if (/^#hl-/.test(window.location.hash) && window.history && history.replaceState) {
-        try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (err) { /* ignore */ }
-      }
-      if (!hlSkipFocus && hlOpener && hlOpener.focus) hlOpener.focus({ preventScroll: true });
-      hlSkipFocus = false;
-    });
-    // a link like page.html#hl-toi opens that story
-    var hlFromHash = function () {
-      var m = /^#hl-([a-z0-9_-]+)$/i.exec(window.location.hash);
-      if (!m || hlDlg.open) return;
-      var card = doc.getElementById('hl-' + m[1]);
-      if (card && card.getAttribute('data-hl')) openHl(m[1], null);
-    };
-    window.addEventListener('hashchange', hlFromHash);
-    hlFromHash();
   }
 
   /* ---------- email: click to reveal (address is assembled here, never in the HTML) ---------- */
@@ -666,11 +361,9 @@
       if (reduced) {
         reveals.forEach(function (el) { el.classList.add('in'); });
         lits.forEach(function (el) { el.classList.add('in'); });
-        if (timeline) timeline.style.setProperty('--tl', '1');
       }
     });
   }
 
   onScroll();
-  updateTimeline();
 })();
