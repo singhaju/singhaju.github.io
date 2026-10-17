@@ -216,6 +216,11 @@
         offscreen = !es[es.length - 1].isIntersecting; refresh();
       }, { threshold: 0.1 }).observe(term);
     }
+    // the body height changes with the window: re-measure and keep only the newest entries that fit
+    var rzT = null;
+    function onResize() { if (rzT) clearTimeout(rzT); rzT = setTimeout(function () { rzT = null; fit(); }, 120); }
+    if (window.ResizeObserver) new ResizeObserver(onResize).observe(body);
+    else window.addEventListener('resize', onResize);
     sched(typeLine, 400);
   })();
 
