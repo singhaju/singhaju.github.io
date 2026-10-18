@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src &#39;self&#39; data:; font-src &#39;self&#39;; style-src &#39;self&#39;; style-src-attr &#39;unsafe-inline&#39;; script-src &#39;self&#39; &#39;sha256-+/hyjqNIFJl8sAhB7t/qHTwT18igFNDdtSFrgki/Eds=&#39;; connect-src &#39;none&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">
-<title>FEDAC: zero-trust access checks that stay fast · Singha Junchan</title>
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src &#39;self&#39; data:; font-src &#39;self&#39;; style-src &#39;self&#39;; style-src-attr &#39;unsafe-inline&#39;; script-src &#39;self&#39; &#39;sha256-+/hyjqNIFJl8sAhB7t/qHTwT18igFNDdtSFrgki/Eds=&#39;; connect-src &#39;self&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">
+<title>FEDAC: zero-trust access checks · Singha Junchan</title>
 <meta name="description" content="Check the caller carefully once, then check a short-lived pass cheaply on every call.">
 <link rel="canonical" href="https://singhaju.github.io/work/fedac/">
 <meta name="color-scheme" content="dark light">
@@ -13,21 +13,44 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Singha Junchan">
-<meta property="og:title" content="FEDAC: zero-trust access checks that stay fast · Singha Junchan">
+<meta property="og:title" content="FEDAC: zero-trust access checks · Singha Junchan">
 <meta property="og:description" content="Check the caller carefully once, then check a short-lived pass cheaply on every call.">
 <meta property="og:url" content="https://singhaju.github.io/work/fedac/">
-<meta property="og:image" content="https://singhaju.github.io/og.png">
+<meta property="og:image" content="https://singhaju.github.io/work/fedac/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Singha Junchan: zero-trust security, Kubernetes and cloud security, AI-agent security">
+<meta property="og:image:alt" content="Research · 1st of 4 authors: FEDAC: zero-trust access checks that stay fast. Singha Junchan.">
+
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="FEDAC: zero-trust access checks that stay fast · Singha Junchan">
+<meta name="twitter:title" content="FEDAC: zero-trust access checks · Singha Junchan">
 <meta name="twitter:description" content="Check the caller carefully once, then check a short-lived pass cheaply on every call.">
-<meta name="twitter:image" content="https://singhaju.github.io/og.png">
+<meta name="twitter:image" content="https://singhaju.github.io/work/fedac/og.png">
+<meta name="twitter:image:alt" content="Research · 1st of 4 authors: FEDAC: zero-trust access checks that stay fast. Singha Junchan.">
 <script data-font="../../assets/fonts/inter-latin-wght-normal.woff2">(function(){var d=document.documentElement;d.classList.add("js");var t;try{var q=new URLSearchParams(location.search).get("theme");t=(q==="light"||q==="dark")?q:localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}d.setAttribute("data-theme",t);window.__rvT=setTimeout(function(){d.classList.add("rv-off")},4000);var s=document.currentScript,f=s&&s.getAttribute("data-font");if(f&&location.protocol!=="file:"){var l=document.createElement("link");l.rel="preload";l.as="font";l.type="font/woff2";l.crossOrigin="anonymous";l.href=f;document.head.appendChild(l)}})();</script>
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
 <link rel="stylesheet" href="../../style.css">
-
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://singhaju.github.io/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "FEDAC: zero-trust access checks that stay fast",
+      "item": "https://singhaju.github.io/work/fedac/"
+    }
+  ]
+}
+</script>
 <script src="../../main.js" defer></script>
 </head>
 <body>
@@ -35,10 +58,11 @@
 <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
 <header class="site-header" id="site-header">
   <div class="wrap hdr">
-    <a class="logo" href="../../" aria-label="Singha Junchan, home"><span class="logo-mark">SJ</span><span class="logo-name">Singha Junchan</span></a>
+    <a class="logo" href="../../" aria-label="SJ, Singha Junchan, home"><span class="logo-mark">SJ</span><span class="logo-name">Singha Junchan</span></a>
     <nav class="nav" id="nav" aria-label="Primary">
       <ul>
         <li><a href="../../#work">Work</a></li>
+        <li><a href="../../#writing">Writing</a></li>
         <li><a href="../../#experience">Experience</a></li>
         <li><a href="../../#research">Research</a></li>
         <li><a href="../../#credentials">Credentials</a></li>
@@ -47,7 +71,7 @@
     </nav>
     <div class="hdr-actions">
       <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Switch colour theme"><svg class="ic i-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg><svg class="ic i-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 14.2A8 8 0 0 1 9.8 4a8 8 0 1 0 10.2 10.2Z"/></svg></button>
-      <a class="btn btn-sm btn-ghost hdr-pdf" href="../../Singha-Junchan-Resume.pdf" download><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg><span>Resume</span></a>
+      <a class="btn btn-sm btn-ghost hdr-pdf" href="../../Singha-Junchan-Resume.pdf" aria-label="Download resume (PDF)" download><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg><span>Resume</span></a>
       <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Open menu"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </div>
@@ -57,15 +81,15 @@
   <div class="wrap c-wrap">
     <p class="c-back"><a href="../../#work"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg><span>All work</span></a></p>
     <header class="c-head">
-      <p class="c-kick reveal">Research · first author of 4</p>
+      <p class="c-kick reveal">Research · 1st of 4 authors</p>
       <div class="w-badges reveal" style="--i:1"><span class="badge badge-info"><span class="b-dot" aria-hidden="true"></span>Under review · IEEE TDSC</span></div>
       <h1 id="case-h" class="reveal" style="--i:2">FEDAC: zero-trust access checks that stay fast</h1>
       <p class="c-lead reveal" style="--i:3">Check the caller carefully once, then check a <strong class="kw">short-lived pass</strong> cheaply on every call.</p>
     </header>
-    <dl class="c-meta reveal"><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg></span><span>Role</span></dt><dd>First author of 4; research design and implementation</dd></div><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2 4.5 5"/></svg></span><span>Team</span></dt><dd>Two fellow students and Prof. Somchart Fugkeaw</dd></div><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 21V4"/><path d="M5 4h11.5l-2 4 2 4H5"/></svg></span><span>Status</span></dt><dd>Under review at IEEE TDSC</dd></div><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="m13.5 5-3 14"/></svg></span><span>Built with</span></dt><dd>Go, Rust, Envoy and Istio, Groth16, IPFS, AWS EKS</dd></div></dl>
+    <dl class="c-meta reveal"><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg></span><span>Role</span></dt><dd>1st of 4 authors; research design and implementation</dd></div><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.2c2.6.2 4.5 2 4.5 5"/></svg></span><span>Team</span></dt><dd>Two fellow students and Prof. Somchart Fugkeaw</dd></div><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 21V4"/><path d="M5 4h11.5l-2 4 2 4H5"/></svg></span><span>Status</span></dt><dd>Under review at IEEE TDSC</dd></div><div><dt><span class="lab-ic" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="m13.5 5-3 14"/></svg></span><span>Built with</span></dt><dd>Go, Rust, Envoy and Istio, Groth16, IPFS, AWS EKS</dd></div></dl>
     <div class="c-kt reveal"><div class="kt kt-rows"><div class="kt-r"><span class="kt-h"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H20v13H5.5A1.5 1.5 0 0 0 4 18.5v-13Z"/><path d="M4 18.5A1.5 1.5 0 0 0 5.5 20H20v-3"/></svg><span>Knowledge</span></span><ul class="kt-l kt-k" aria-label="Knowledge"><li class="kn">Zero trust</li><li class="kn">Zero-knowledge proofs</li><li class="kn">Service mesh</li><li class="kn">Blockchain audit</li><li class="kn">Cloud benchmarking</li></ul></div><div class="kt-r"><span class="kt-h"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="m13.5 5-3 14"/></svg><span>Tech used</span></span><ul class="kt-l kt-t" aria-label="Tech used"><li class="te">Go</li><li class="te">Rust</li><li class="te">Groth16 zk-SNARK</li><li class="te">Envoy + Istio</li><li class="te">IPFS</li><li class="te">AWS EKS</li></ul></div></div></div>
     <figure class="c-fig reveal"><a class="lb gframe-fig" href="../../assets/img/fig-fedac-system.webp" data-group="case" data-title="FEDAC: zero-trust access checks that stay fast" data-sub="FEDAC architecture: a control hub issues short-lived passes and a sidecar next to each service checks them locally." data-alt="FEDAC architecture: a control hub issues short-lived passes and a sidecar next to each service checks them locally." aria-haspopup="dialog" aria-label="Enlarge picture: FEDAC architecture: a control hub issues short-lived passes and a sidecar next to each service checks them locally.">
-          <img src="../../assets/img/fig-fedac-system.webp" alt="FEDAC architecture: a control hub issues short-lived passes and a sidecar next to each service checks them locally." width="1800" height="907" loading="lazy" decoding="async">
+          <img src="../../assets/img/fig-fedac-system.webp" srcset="../../assets/img/fig-fedac-system.w480.webp 480w, ../../assets/img/fig-fedac-system.w960.webp 960w, ../../assets/img/fig-fedac-system.webp 1800w" sizes="(min-width:1100px) 1016px, calc(100vw - 32px)" alt="FEDAC architecture: a control hub issues short-lived passes and a sidecar next to each service checks them locally." width="1800" height="907" fetchpriority="high" decoding="async">
           <span class="zoom" aria-hidden="true"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M10 20H4v-6"/><path d="m20 4-7 7M4 20l7-7"/></svg></span>
         </a><figcaption>FEDAC architecture: a control hub issues short-lived passes and a sidecar next to each service checks them locally.</figcaption></figure>
     
@@ -110,7 +134,7 @@
       <span class="c-nl">Next case study</span>
       <span class="c-nt">U-HAP: one place for every Kubernetes access rule</span>
       <span class="c-ns">One model for RBAC, ABAC, ACL and deny rules, compiled ahead of time, with the same answer every time.</span>
-      <span class="t-go"><span>Research · second author of 4 · presenter</span><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+      <span class="t-go"><span>Research · 2nd of 4 authors · presenter</span><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
     </a>
     <p class="c-back c-back-end"><a href="../../#work"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg><span>Back to all work</span></a></p>
   </div>
@@ -120,7 +144,7 @@
   <div class="wrap foot">
     <div>
       <p class="foot-main">Singha Junchan · Pathum Thani, Thailand</p>
-      <p class="foot-small">Last updated <time datetime="2026-10-17">17 October 2026</time>. No tracking and no cookies.</p>
+      <p class="foot-small">Last updated <time datetime="2026-10-18">18 October 2026</time>. No tracking and no cookies.</p>
     </div>
     <a class="btn btn-ghost btn-sm" href="#top"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg><span>Back to top</span></a>
   </div>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src &#39;self&#39; data:; font-src &#39;self&#39;; style-src &#39;self&#39;; style-src-attr &#39;unsafe-inline&#39;; script-src &#39;self&#39; &#39;sha256-+/hyjqNIFJl8sAhB7t/qHTwT18igFNDdtSFrgki/Eds=&#39;; connect-src &#39;self&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">
+<title>The question behind my research · Singha Junchan</title>
+<meta name="description" content="Can a security check be cheap enough to run on every request, and still be provable afterwards? How that one question links my research projects.">
+<link rel="canonical" href="https://singhaju.github.io/writing/question-behind-my-research/">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#070b14">
+<meta name="author" content="Singha Junchan">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Singha Junchan">
+<meta property="og:title" content="The question behind my research · Singha Junchan">
+<meta property="og:description" content="Can a security check be cheap enough to run on every request, and still be provable afterwards? How that one question links my research projects.">
+<meta property="og:url" content="https://singhaju.github.io/writing/question-behind-my-research/">
+<meta property="og:image" content="https://singhaju.github.io/writing/question-behind-my-research/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The question behind my research. Singha Junchan.">
+<meta property="article:published_time" content="2026-10-18">
+<meta property="article:author" content="Singha Junchan">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The question behind my research · Singha Junchan">
+<meta name="twitter:description" content="Can a security check be cheap enough to run on every request, and still be provable afterwards? How that one question links my research projects.">
+<meta name="twitter:image" content="https://singhaju.github.io/writing/question-behind-my-research/og.png">
+<meta name="twitter:image:alt" content="The question behind my research. Singha Junchan.">
+<script data-font="../../assets/fonts/inter-latin-wght-normal.woff2">(function(){var d=document.documentElement;d.classList.add("js");var t;try{var q=new URLSearchParams(location.search).get("theme");t=(q==="light"||q==="dark")?q:localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}d.setAttribute("data-theme",t);window.__rvT=setTimeout(function(){d.classList.add("rv-off")},4000);var s=document.currentScript,f=s&&s.getAttribute("data-font");if(f&&location.protocol!=="file:"){var l=document.createElement("link");l.rel="preload";l.as="font";l.type="font/woff2";l.crossOrigin="anonymous";l.href=f;document.head.appendChild(l)}})();</script>
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "The question behind my research",
+  "description": "Can a security check be cheap enough to run on every request, and still be provable afterwards? How that one question links my research projects.",
+  "datePublished": "2026-10-18",
+  "dateModified": "2026-10-18",
+  "mainEntityOfPage": "https://singhaju.github.io/writing/question-behind-my-research/",
+  "image": "https://singhaju.github.io/writing/question-behind-my-research/og.png",
+  "author": {
+    "@type": "Person",
+    "name": "Singha Junchan",
+    "url": "https://singhaju.github.io/"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://singhaju.github.io/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writing",
+      "item": "https://singhaju.github.io/#writing"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "The question behind my research",
+      "item": "https://singhaju.github.io/writing/question-behind-my-research/"
+    }
+  ]
+}
+</script>
+<script src="../../main.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+<header class="site-header" id="site-header">
+  <div class="wrap hdr">
+    <a class="logo" href="../../" aria-label="SJ, Singha Junchan, home"><span class="logo-mark">SJ</span><span class="logo-name">Singha Junchan</span></a>
+    <nav class="nav" id="nav" aria-label="Primary">
+      <ul>
+        <li><a href="../../#work">Work</a></li>
+        <li><a href="../../#writing">Writing</a></li>
+        <li><a href="../../#experience">Experience</a></li>
+        <li><a href="../../#research">Research</a></li>
+        <li><a href="../../#credentials">Credentials</a></li>
+        <li><a href="../../#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="hdr-actions">
+      <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Switch colour theme"><svg class="ic i-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg><svg class="ic i-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 14.2A8 8 0 0 1 9.8 4a8 8 0 1 0 10.2 10.2Z"/></svg></button>
+      <a class="btn btn-sm btn-ghost hdr-pdf" href="../../Singha-Junchan-Resume.pdf" aria-label="Download resume (PDF)" download><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg><span>Resume</span></a>
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Open menu"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+</header>
+<main id="main" tabindex="-1">
+<article class="post" id="top" aria-labelledby="post-h">
+  <div class="wrap p-wrap">
+    <p class="c-back"><a href="../../#writing"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg><span>All writing</span></a></p>
+    <header class="p-head">
+      <p class="p-meta"><time datetime="2026-10-18">18 October 2026</time><span class="sep" aria-hidden="true"> · </span><span>3 min read</span></p>
+      <h1 id="post-h">The question behind my research</h1>
+      <p class="p-sum">Can a security check be cheap enough to run on every request, and still be provable afterwards? How that one question links my research projects.</p>
+      <ul class="tags p-tags"><li>Research</li><li>Access control</li><li>Cryptography</li></ul>
+    </header>
+    <div class="p-body">
+      <p>My research projects look different at first: Kubernetes access rules, zero-knowledge proofs, post-quantum signatures, AI agents, fog computing. Most of them come back to <strong class="kw">one question</strong>: can a security check be cheap enough to run on every request, and still be provable afterwards?</p>
+      <h2 id="h-why-both-matter">Why both matter</h2>
+      <p>A check that is too slow gets skipped or turned off. A check that leaves no proof cannot be trusted later, by an auditor or after an incident. I want both.</p>
+      <h2 id="h-the-pattern-i-keep-using">The pattern I keep using</h2>
+      <ul><li><strong class="kw">Do the heavy work once.</strong> Compile the rules ahead of time, or verify the caller carefully once and issue a short-lived pass.</li><li><strong class="kw">Make each request cheap.</strong> Check a small token or a precompiled index, so each request does little work.</li><li><strong class="kw">Keep a commitment for later.</strong> Merkle trees and ledger anchors make any change to rules or logs show.</li><li><strong class="kw">Fail safe.</strong> A deny rule wins, and revoking access removes only what is affected.</li></ul>
+      <h2 id="h-where-each-project-fits">Where each project fits</h2>
+      <ul><li><strong class="kw">U-HAP</strong> (published, Best Paper at IEEE JCSSE 2026, 2nd of 4 authors): one model for every Kubernetes access rule, compiled ahead of time; deny always wins. <a href="../../writing/why-deny-wins/">Read the post</a></li><li><strong class="kw">FEDAC</strong> (under review at IEEE TDSC, 1st of 4 authors): zero-trust checks across clusters with a short-lived pass. <a href="../../writing/zero-trust-check-once/">Read the post</a></li><li><strong class="kw">ZKAudit</strong> (accepted at KST 2027): an auditor proves they may audit without saying who they are. <a href="../../writing/audit-without-revealing-who/">Read the post</a></li><li><strong class="kw">PQ-SCVA-MCK</strong> (submitted): post-quantum signed proofs for access decisions across clusters. <a href="../../writing/post-quantum-access-decisions/">Read the post</a></li><li><strong class="kw">SWARM-Fog</strong> (submitted): edge servers that pull work like a swarm and recover from failures, with no central controller.</li><li><strong class="kw">MoCA</strong> (in preparation): keeping an AI agent inside what its person allowed. <a href="../../writing/ai-agent-hidden-instruction/">Read the post</a></li><li><strong class="kw">ZK-ALBA</strong>, an <strong class="kw">encrypted SIEM</strong> and <strong class="kw">FRESCO</strong> (in preparation): audit proofs bound to what each auditor may see, attack detection on encrypted logs shared by several companies, and freshness proofs for cloud services that scale up and down.</li></ul>
+      <h2 id="h-how-i-work-on-each-one">How I work on each one</h2>
+      <p>Find the gap in published designs, design the scheme, build the prototype, measure it on AWS or real data, and write the paper. All of them are with my supervisor, Prof. Somchart Fugkeaw, at SIIT.</p>
+      <div class="p-note" role="note"><p>For work that is not published yet, I show the idea and what I built, not results. The full list is in the <a href="../../#research">Research section</a>.</p></div>
+    </div>
+    <p class="c-back c-back-end"><a href="../../#writing"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg><span>Back to all writing</span></a></p>
+  </div>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="wrap foot">
+    <div>
+      <p class="foot-main">Singha Junchan · Pathum Thani, Thailand</p>
+      <p class="foot-small">Last updated <time datetime="2026-10-18">18 October 2026</time>. No tracking and no cookies.</p>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="#top"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg><span>Back to top</span></a>
+  </div>
+</footer>
+<dialog class="lightbox" id="lightbox" aria-label="Image viewer">
+  <div class="lb-inner">
+    <button type="button" class="lb-btn lb-close" id="lb-close" aria-label="Close image viewer"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <button type="button" class="lb-btn lb-nav lb-prev" id="lb-prev" aria-label="Previous image"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg></button>
+    <figure class="lb-fig">
+      <div class="lb-imgwrap"><img id="lb-img" alt="" decoding="async"></div>
+      <figcaption id="lb-cap"></figcaption>
+    </figure>
+    <button type="button" class="lb-btn lb-nav lb-next" id="lb-next" aria-label="Next image"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7"/></svg></button>
+    <p class="lb-count" id="lb-count" aria-live="polite"></p>
+  </div>
+</dialog>
+</body>
+</html>
