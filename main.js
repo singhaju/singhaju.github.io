@@ -1,5 +1,9 @@
-/* Portfolio behaviour. Plain JS, no dependencies. Every feature checks its elements, so it is safe on any page.
-   Without this file the page is still fully readable (progressive enhancement). */
+/* Portfolio behaviour (v3 trial). Plain JS, no dependencies. Every feature checks its elements, so it is safe on any page.
+   Without this file the page is still fully readable (progressive enhancement).
+   v3 differences from the live main.js (pass 2): no generic scroll reveal; the hero terminal is back and keeps its lines
+   as scrollback; added the sliding nav bar, one-time heading/figure reveals, timeline dots, the View Transitions theme
+   switch, the access-decision demo (now inside the U-HAP panel), one-time count-ups, staggered entrances, the sticky
+   work index and one cursor-lit border handler. */
 (function () {
   'use strict';
 
@@ -14,7 +18,11 @@
   // main.js is alive: cancel the "show everything" safety timer set in <head>
   if (window.__rvT) clearTimeout(window.__rvT);
 
-  /* ---------- theme toggle ---------- */
+  // CSS loops (the pulse dot) pause while the tab is hidden; the canvas, the decision panel and the slideshows check doc.hidden themselves
+  doc.addEventListener('visibilitychange', function () { root.classList.toggle('tab-hidden', doc.hidden); });
+
+  /* ---------- theme toggle: the new theme grows as a circle from the button (View Transitions API) ----------
+     Without the API, or with reduced motion, the theme just switches. The choice is remembered as before. */
   var themeBtn = $('#theme-toggle');
   function currentTheme() { return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
   function syncThemeUi() {
@@ -27,10 +35,24 @@
   if (themeBtn) {
     themeBtn.addEventListener('click', function () {
       var next = currentTheme() === 'light' ? 'dark' : 'light';
-      root.setAttribute('data-theme', next);
+      var apply = function () {
+        root.setAttribute('data-theme', next);
+        syncThemeUi();
+        doc.dispatchEvent(new Event('themechange'));
+      };
       try { localStorage.setItem('theme', next); } catch (e) { /* storage may be blocked */ }
-      syncThemeUi();
-      doc.dispatchEvent(new Event('themechange'));
+      if (!doc.startViewTransition || reduced || doc.hidden) { apply(); return; }
+      var b = themeBtn.getBoundingClientRect();
+      var x = b.left + b.width / 2, y = b.top + b.height / 2;
+      var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+      var vt;
+      try { vt = doc.startViewTransition(apply); } catch (e) { apply(); return; }
+      vt.ready.then(function () {
+        root.animate(
+          { clipPath: ['circle(0px at ' + x + 'px ' + y + 'px)', 'circle(' + rad + 'px at ' + x + 'px ' + y + 'px)'] },
+          { duration: 450, easing: 'cubic-bezier(0.77,0,0.175,1)', pseudoElement: '::view-transition-new(root)' }
+        );
+      }, function () { /* transition skipped: the theme is already applied */ });
     });
   }
 
@@ -86,6 +108,24 @@
     window.addEventListener('resize', measureOld, { passive: true });
   }
 
+  /* sliding bar under the current nav link (desktop only; CSS hides it on phones). Nothing is current while the hero is in view. */
+  var navEl = $('#nav');
+  var navBar = navEl ? $('.nav-bar', navEl) : null;
+  function placeBar(snap) {
+    if (!navBar || !navEl) return;
+    var a = $('a[aria-current="true"]', navEl);
+    if (!a || !navEl.offsetWidth || !a.offsetWidth) { navBar.classList.remove('on'); return; }
+    var n = navEl.getBoundingClientRect(), r = a.getBoundingClientRect();
+    var inset = parseFloat(getComputedStyle(a).paddingLeft) || 0;
+    var first = !navBar.classList.contains('on');
+    if (snap || first) navBar.classList.add('snap');
+    navBar.style.transform = 'translate(' + (r.left - n.left + inset).toFixed(1) + 'px,' + (r.bottom - n.top - 8).toFixed(1) + 'px) scaleX(' + Math.max(0, r.width - inset * 2).toFixed(1) + ')';
+    if (snap || first) { void navBar.offsetWidth; navBar.classList.remove('snap'); }
+    navBar.classList.add('on');
+  }
+  if (navBar && window.ResizeObserver) new ResizeObserver(function () { placeBar(true); }).observe(navEl);
+  if (navBar && doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { placeBar(true); });
+
   if (hasIO) {
     var spyLinks = {};
     $$('a[data-spy]').forEach(function (a) { spyLinks[a.getAttribute('data-spy')] = a; });
@@ -96,13 +136,14 @@
           if (k === en.target.id) spyLinks[k].setAttribute('aria-current', 'true');
           else spyLinks[k].removeAttribute('aria-current');
         });
+        placeBar(false);
       });
     }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
     Object.keys(spyLinks).forEach(function (k) { var s = doc.getElementById(k); if (s) spyIO.observe(s); });
     var topEl = $('#top');
     if (topEl) {
       new IntersectionObserver(function (en) {
-        if (en[0].isIntersecting) Object.keys(spyLinks).forEach(function (k) { spyLinks[k].removeAttribute('aria-current'); });
+        if (en[0].isIntersecting) { Object.keys(spyLinks).forEach(function (k) { spyLinks[k].removeAttribute('aria-current'); }); placeBar(false); }
       }, { rootMargin: '-45% 0px -50% 0px' }).observe(topEl);
     }
   }
@@ -124,23 +165,82 @@
     });
   }
 
-  /* ---------- reveal on scroll ---------- */
-  // The first view (home hero, case-study header, meta row, lead figure) is never hidden by CSS (see
-  // site.css), so it paints without waiting for this file and no timer is involved; those elements
-  // just get the class and are not observed. Everything below the fold fades in when it scrolls into view.
-  var reveals = $$('.reveal');
-  if (!hasIO || reduced) {
-    reveals.forEach(function (el) { el.classList.add('in'); });
-  } else {
-    var rvIO = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (en.isIntersecting) { en.target.classList.add('in'); rvIO.unobserve(en.target); }
+  /* ---------- hero headline: one gradient across a highlighted run ----------
+     While the words rise, each highlighted word paints its own gradient (see .hl-run in site.css). When the run sits on
+     one line, give each word the slice of the run's width it covers so the pair still reads as one gradient. */
+  var hlRuns = $$('.hl-run');
+  function sizeRuns() {
+    hlRuns.forEach(function (run) {
+      var ws = $$('.wi', run), n = ws.length;
+      if (n < 2) return;
+      var first = ws[0], last = ws[n - 1];
+      var one = Math.abs(first.offsetTop - last.offsetTop) < 3;
+      ws.forEach(function (w) {
+        if (!one) { w.style.removeProperty('--gw'); w.style.removeProperty('--gx'); return; }
+        var total = last.offsetLeft + last.offsetWidth - first.offsetLeft;
+        w.style.setProperty('--gw', total + 'px');
+        w.style.setProperty('--gx', (first.offsetLeft - w.offsetLeft) + 'px');
       });
-    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.06 });
-    reveals.forEach(function (el) {
-      if (el.closest('.hero-grid, .c-head, .c-meta') || el.matches('.c-wrap>.c-fig:first-of-type')) el.classList.add('in');
-      else rvIO.observe(el);
     });
+  }
+  if (hlRuns.length) {
+    if (window.ResizeObserver) new ResizeObserver(sizeRuns).observe(hlRuns[0].parentNode);
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(sizeRuns);
+  }
+
+  /* ---------- one-time reveals ----------
+     Only two things wait for scrolling: the short line under each section heading (.rev-h) and the work / research
+     figures (.rev-fig). CSS hides them only while html.js is on and motion is allowed (and not after the 4 s safety
+     timer in <head>); everything else on the page is simply visible. */
+  var once = $$('.rev-h, .rev-fig');
+  var onReduce = [];                                          // things to finish when reduced motion is switched on at runtime
+  if (!hasIO || reduced) {
+    once.forEach(function (el) { el.classList.add('in'); });
+  } else {
+    /* An element that is clipped away by its own clip-path never counts as "visible" to the observer, so figures that
+       carry the clip themselves (.m-fig, .gframe) are watched through their parent box instead. */
+    var proxies = [];
+    var onceIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!(en.isIntersecting || en.boundingClientRect.top < 0)) return;
+        onceIO.unobserve(en.target);
+        proxies.forEach(function (p) { if (p.t === en.target) p.el.classList.add('in'); });
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.15 });
+    once.forEach(function (el) {
+      var t = (el.classList.contains('m-fig') || el.classList.contains('gframe')) && el.parentElement ? el.parentElement : el;
+      proxies.push({ el: el, t: t });
+      onceIO.observe(t);
+    });
+  }
+
+  /* ---------- staggered entrance (bento tiles, the 'what makes it new' cards, the work impact cards): the grid gets .in once, CSS staggers the children ---------- */
+  var grids = $$('.bento, .wp-pts, .wp-impact');
+  if (!hasIO || reduced) {
+    grids.forEach(function (g) { g.classList.add('in'); });
+  } else {
+    var gridIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting || en.boundingClientRect.top < 0) { en.target.classList.add('in'); gridIO.unobserve(en.target); }
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.05 });
+    grids.forEach(function (g) { gridIO.observe(g); });
+  }
+  onReduce.push(function () { grids.forEach(function (g) { g.classList.add('in'); }); });
+
+  /* ---------- experience timeline: an entry's dot turns accent once its top passes the middle of the screen ---------- */
+  var tlList = $('.tl');
+  if (hasIO && tlList) {
+    tlList.classList.add('tl-js');
+    var tlIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { en.target.classList.toggle('mid', !!en.rootBounds && en.boundingClientRect.top <= en.rootBounds.bottom); });
+    }, { rootMargin: '0px 0px -50% 0px' });
+    $$('.tl-i', tlList).forEach(function (li) { tlIO.observe(li); });
+    /* the entry in view (a thin band across the middle of the screen) gets a faint background; opacity only */
+    var curIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { en.target.classList.toggle('is-cur', en.isIntersecting); });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    $$('.tl-i', tlList).forEach(function (li) { curIO.observe(li); });
   }
 
   /* ---------- lit-up sequences (case-study flows): play once when mostly visible ---------- */
@@ -158,21 +258,26 @@
 
   var heroEl = $('#top');
 
-  /* ---------- hero terminal: types a few lines in random order ----------
-     A no-op unless #term exists (the home page shows it when hero.terminal_web has lines). */
+  /* ---------- hero terminal: the live terminal, now with scrollback ----------
+     The box takes the height of the About column (CSS), so "Longer" makes it taller. Every " · " item of an output is its
+     own line. The lines follow the order of content.json. On load the finished lines are drawn at once (oldest first) until
+     the body is about 75% full, then the next ones are typed. When the box grows, finished lines are added at once so it
+     is never empty; when the body is full it scrolls so the newest line stays at the bottom. After the last line it types
+     "clear", fades, and starts again with the same pre-fill. With reduced motion nothing types: it shows as many of the lines
+     as fit. Without JavaScript the HTML already holds all lines and CSS clips them. */
   (function () {
     var term = $('#term');
-    if (!term || reduced) return;
+    if (!term) return;
     var body = $('#term-body'), btn = $('#term-pause'), dataEl = $('#term-data');
     if (!body || !dataEl) return;
     var lines;
     try { lines = JSON.parse(dataEl.textContent); } catch (e) { return; }
     if (!lines || !lines.length) return;
-    var CHAR_MS = 34, OUT_MS = 300, HOLD_MS = 2500;
+    var CHAR_MS = 34, OUT_MS = 300, OL_MS = 70, HOLD_MS = 1800, CLEAR_MS = 220, FILL = 0.75, MAXFILL = 0.92;
     var timer = null, nextFn = null, userPaused = false, offscreen = false, hidden = !!doc.hidden;
     var cursor = doc.createElement('span');
     cursor.className = 'tm-cur';
-    var order = [], first = true, last = null, started = false;
+    var pos = 0, cur = null, clearing = false, lastH = 0, liveOn = false;
 
     function active() { return !userPaused && !offscreen && !hidden; }
     function sched(fn, ms) {
@@ -185,64 +290,168 @@
         if (!timer && nextFn) { var f = nextFn; timer = setTimeout(function () { timer = null; f(); }, 0); }
       } else if (timer) { clearTimeout(timer); timer = null; }
     }
-    function shuffle(a) {
-      for (var i = a.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t; }
-      return a;
-    }
-    function refill() {
-      var idx = lines.map(function (_, i) { return i; });
-      if (first) { order = [0].concat(shuffle(idx.slice(1))); first = false; return; }
-      order = shuffle(idx);
-      if (order.length > 1 && order[0] === last) { var t = order[0]; order[0] = order[1]; order[1] = t; }
+    function stopLive() {
+      liveOn = false; nextFn = null; cur = null; clearing = false;
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
     }
     function bangkokNow() {
       try {
         var p = {};
         new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
           .formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
-        return p.weekday + ' ' + p.day + ' ' + p.month + ' ' + p.year + ' · ' + p.hour + ':' + p.minute;
+        return p.weekday + ' ' + p.day + ' ' + p.month + ' ' + p.year + ' ' + p.hour + ':' + p.minute;
       } catch (e) { return ''; }
     }
-    // drop the oldest entries until the newest ones fit: all heights are read first, then the nodes are removed
-    function fit() {
-      var kids = body.children, n = kids.length;
-      if (n < 2) return;
-      var room = body.clientHeight - 20, hs = [], total = 0, i;
-      for (i = 0; i < n; i++) { hs.push(kids[i].offsetHeight); total += hs[i] + (i ? 8 : 0); }
-      var drop = 0;
-      while (total > room && drop < n - 1) { total -= hs[drop] + (drop + 1 < n ? 8 : 0); drop++; }
-      for (i = 0; i < drop; i++) body.removeChild(body.firstChild);
+    // the output of one line as an array of output lines (the date line is the Bangkok date and time plus '(UTC+7)', no place name)
+    function outLines(d) {
+      var a = Array.isArray(d.o) ? d.o.slice() : [String(d.o)];
+      if (d.d === 'date') { var now = bangkokNow(); if (now) return [now + ' (UTC+7)']; }
+      return a;
+    }
+    function el(tag, cls, text) {
+      var n = doc.createElement(tag);
+      if (cls) n.className = cls;
+      if (text) n.textContent = text;
+      return n;
+    }
+    // keep the newest line at the bottom: scrollTop follows the content (smooth unless reduced motion)
+    function follow() {
+      var h = body.scrollHeight;
+      if (h === lastH) return;
+      lastH = h;
+      if (h > body.clientHeight + 1) body.scrollTo({ top: h, behavior: reduced ? 'auto' : 'smooth' });
+    }
+    // height of the printed content (scrollHeight is never below clientHeight, so measure from the last entry)
+    function contentH() {
+      var l = body.lastElementChild;
+      if (!l) return 0;
+      return l.getBoundingClientRect().bottom - body.getBoundingClientRect().top + body.scrollTop;
+    }
+    function newEnt(withCursor) {
+      var ent = el('div', 'tm-ent'), cmd = el('div', 'tm-cmd');
+      var tx = el('span', 'tm-text');
+      cmd.appendChild(el('span', 'tm-prompt', '$'));
+      cmd.appendChild(doc.createTextNode(' '));
+      cmd.appendChild(tx);
+      if (withCursor) cmd.appendChild(cursor);
+      ent.appendChild(cmd);
+      body.appendChild(ent);
+      return { ent: ent, tx: tx };
+    }
+    function fillOut(out, items) {
+      out.textContent = '';
+      items.forEach(function (t) { out.appendChild(el('div', 'tm-o', t)); });
+    }
+    // a finished entry (command and all output lines), added at once
+    function appendDone(i) {
+      var e = newEnt(false), out = el('div', 'tm-out');
+      e.tx.textContent = lines[i].c;
+      fillOut(out, outLines(lines[i]));
+      e.ent.appendChild(out);
+      return e.ent;
+    }
+    // the cursor waits at the end of the newest line
+    function placeCursor() {
+      var last = body.lastElementChild;
+      if (!last) return;
+      var os = last.querySelectorAll('.tm-o');
+      (os.length ? os[os.length - 1] : last.querySelector('.tm-cmd')).appendChild(cursor);
+    }
+    // add finished lines (file order) until the body is about frac full; never leave a half-hidden last line
+    function fillTo(frac) {
+      var cap = body.clientHeight * frac;
+      while (pos < lines.length - 1 && contentH() < cap) { appendDone(pos); pos++; }
+      if (body.children.length > 1 && contentH() > body.clientHeight * MAXFILL) { body.removeChild(body.lastElementChild); pos--; }
+      placeCursor();
+      lastH = body.scrollHeight;
+      body.scrollTop = body.scrollHeight;
+      body.classList.toggle('is-scrolled', body.scrollTop > 4);
+    }
+    // complete the line that is being typed at once
+    function finishCur() {
+      var c = cur;
+      if (!c) return;
+      cur = null;
+      c.e.tx.textContent = c.d.c;
+      if (!c.out) { c.out = el('div', 'tm-out'); c.e.ent.appendChild(c.out); }
+      fillOut(c.out, c.items);
+      placeCursor();
+    }
+    function typeText(tx, text, done) {
+      var n = 0;
+      function step() {
+        n++;
+        tx.textContent = text.slice(0, n);
+        follow();
+        if (n < text.length) sched(step, CHAR_MS + ((Math.random() * 12) | 0));
+        else done();
+      }
+      sched(step, CHAR_MS);
+    }
+    function printItem(k) {
+      var c = cur;
+      if (!c) return;
+      var row = el('div', 'tm-o', c.items[k]);
+      c.out.appendChild(row);
+      row.appendChild(cursor);
+      follow();
+      if (k + 1 < c.items.length) sched(function () { printItem(k + 1); }, OL_MS);
+      else { cur = null; sched(typeLine, HOLD_MS); }
     }
     function typeLine() {
-      if (!started) { body.textContent = ''; started = true; }
-      if (!order.length) refill();
-      var i = order.shift(); last = i;
-      var d = lines[i];
-      var ent = doc.createElement('div'); ent.className = 'tm-ent';
-      var cmd = doc.createElement('div'); cmd.className = 'tm-cmd';
-      var pr = doc.createElement('span'); pr.className = 'tm-prompt'; pr.textContent = '$';
-      var tx = doc.createElement('span'); tx.className = 'tm-text';
-      cmd.appendChild(pr); cmd.appendChild(doc.createTextNode(' ')); cmd.appendChild(tx); cmd.appendChild(cursor);
-      ent.appendChild(cmd); body.appendChild(ent);
-      fit();
-      var n = 0;
-      function typeChar() {
-        n++;
-        tx.textContent = d.c.slice(0, n);
-        if (n < d.c.length) sched(typeChar, CHAR_MS + ((Math.random() * 12) | 0));
-        else sched(showOut, OUT_MS);
+      if (!liveOn || clearing) return;
+      if (pos >= lines.length) { typeClear(); return; }
+      var i = pos++, d = lines[i], e = newEnt(true);
+      var c = cur = { e: e, d: d, items: outLines(d), out: null };
+      follow();
+      typeText(e.tx, d.c, function () {
+        sched(function () {
+          if (cur !== c) return;
+          c.out = el('div', 'tm-out');
+          e.ent.appendChild(c.out);
+          printItem(0);
+        }, OUT_MS);
+      });
+    }
+    // after the last line: type "clear", fade the body out, empty it and start the next round (with the same pre-fill)
+    function typeClear() {
+      clearing = true;
+      var e = newEnt(true);
+      follow();
+      typeText(e.tx, 'clear', function () {
+        sched(function () {
+          body.classList.add('is-clearing');
+          sched(function () {
+            body.textContent = '';
+            body.scrollTop = 0; lastH = 0; pos = 0; cur = null;
+            body.classList.remove('is-scrolled');
+            fillTo(FILL);
+            body.classList.remove('is-clearing');
+            clearing = false;
+            sched(typeLine, 500);
+          }, CLEAR_MS);
+        }, OUT_MS + 200);
+      });
+    }
+    // reduced motion: no typing; append whole entries while they fit (re-run when the box changes size)
+    function fitStatic() {
+      body.textContent = '';
+      body.classList.remove('is-scrolled', 'is-clearing');
+      for (var i = 0; i < lines.length; i++) {
+        var ent = appendDone(i);
+        if (i > 0 && body.scrollHeight > body.clientHeight + 1) { body.removeChild(ent); break; }
       }
-      function showOut() {
-        var out = doc.createElement('div'); out.className = 'tm-out';
-        var text = d.o;
-        if (d.d === 'date') { var now = bangkokNow(); if (now) text = now + ' · ' + d.o; }
-        out.textContent = text;
-        out.appendChild(cursor);
-        ent.appendChild(out);
-        fit();
-        sched(typeLine, HOLD_MS);
-      }
-      sched(typeChar, CHAR_MS);
+      body.scrollTop = 0;
+    }
+    function startLive() {
+      stopLive();
+      body.textContent = '';
+      body.scrollTop = 0; lastH = 0; pos = 0;
+      body.classList.remove('is-scrolled', 'is-clearing');
+      liveOn = true;
+      fillTo(FILL);
+      sched(typeLine, 900);
     }
 
     if (btn) {
@@ -259,12 +468,211 @@
         offscreen = !es[es.length - 1].isIntersecting; refresh();
       }, { threshold: 0.1 }).observe(term);
     }
-    // the body height changes with the window: re-measure and keep only the newest entries that fit
+    body.addEventListener('scroll', function () { body.classList.toggle('is-scrolled', body.scrollTop > 4); }, { passive: true });
+    // the box height follows the About column ("Longer", window size): a taller box is filled at once with finished lines
+    // (never an empty band), a shorter one keeps the newest line at the bottom
     var rzT = null;
-    function onResize() { if (rzT) clearTimeout(rzT); rzT = setTimeout(function () { rzT = null; fit(); }, 120); }
+    function onResize() {
+      if (rzT) clearTimeout(rzT);
+      rzT = setTimeout(function () {
+        rzT = null;
+        if (reduced) { fitStatic(); return; }
+        if (liveOn && !clearing && pos < lines.length - 1 && contentH() < body.clientHeight * FILL) {
+          finishCur();
+          fillTo(FILL);
+          sched(typeLine, 600);
+        } else { lastH = 0; follow(); }
+      }, 120);
+    }
     if (window.ResizeObserver) new ResizeObserver(onResize).observe(body);
     else window.addEventListener('resize', onResize);
-    sched(typeLine, 400);
+    if (mq.addEventListener) {
+      mq.addEventListener('change', function (e) {
+        if (e.matches) { stopLive(); fitStatic(); } else startLive();
+      });
+    }
+    if (reduced) fitStatic(); else startLive();
+  })();
+
+  /* ---------- access-decision demo (U-HAP panel, "Try it" card): four example requests that cycle ----------
+     The HTML already holds example 3 (no JavaScript, reduced motion). Cycling runs only while it is playing, the
+     panel is on screen and the tab is visible. "Next request" and Pause / Play are real buttons. */
+  (function () {
+    var dec = $('#dec');
+    if (!dec) return;
+    var ex;
+    try { ex = JSON.parse(dec.getAttribute('data-ex')); } catch (e) { return; }
+    if (!ex || !ex.length) return;
+    var reqs = $$('#dec .dec-req span');
+    var rules = $$('#dec .dec-rule');
+    var word = $('#dec .dec-word'), why = $('#dec .dec-why');
+    var nextBtn = $('#dec-next'), pauseBtn = $('#dec-pause');
+    var HOLD = 3300;                                   // 2.6 s hold plus the ~0.7 s the lines need to arrive
+    var idx = +dec.getAttribute('data-static') || 0;
+    var playing = !mq.matches, vis = true, timer = 0, swapT = 0;
+
+    function fill(i) {
+      idx = i;
+      var e = ex[i];
+      reqs.forEach(function (sp, k) { sp.textContent = e.req[k] || ''; });
+      rules.forEach(function (li, k) {
+        var r = e.rules[k], c = li.children;
+        c[0].textContent = r ? r[0] : '';
+        c[1].textContent = r ? r[1] : '';
+        c[2].textContent = r ? r[3] : '';
+        c[2].className = 'dec-res' + (r ? ' ' + r[2] : '');
+        li.classList.toggle('is-empty', !r);
+        if (r) li.removeAttribute('aria-hidden'); else li.setAttribute('aria-hidden', 'true');
+      });
+      word.textContent = e.out;
+      word.className = 'dec-word ' + (e.out === 'ALLOW' ? 'allow' : 'deny');
+      why.textContent = e.why;
+      dec.style.setProperty('--n', e.rules.length);
+    }
+    function play(first) {
+      // on page load the panel waits for the hero fade-up (about 0.8 s); later swaps start at once
+      if (first && !root.classList.contains('rv-off') && performance.now() < 1500) dec.style.setProperty('--base', '800ms');
+      else dec.style.removeProperty('--base');
+      dec.classList.remove('go', 'leave');
+      void dec.offsetWidth;
+      dec.classList.add('go');
+    }
+    function swap(i) {
+      clearTimeout(swapT);
+      if (mq.matches) { fill(i); return; }
+      dec.classList.remove('go');
+      dec.classList.add('leave');
+      swapT = setTimeout(function () { fill(i); play(false); }, 150);
+    }
+    function tick() {
+      clearTimeout(timer);
+      if (!playing || !vis || doc.hidden) return;
+      timer = setTimeout(function () { swap((idx + 1) % ex.length); tick(); }, HOLD);
+    }
+    function label() {
+      if (!pauseBtn) return;
+      pauseBtn.textContent = playing ? 'Pause' : 'Play';
+      pauseBtn.setAttribute('aria-pressed', playing ? 'false' : 'true');
+    }
+
+    if (!mq.matches) fill(0);
+    label();
+    if (nextBtn) nextBtn.addEventListener('click', function () { swap((idx + 1) % ex.length); tick(); });
+    if (pauseBtn) pauseBtn.addEventListener('click', function () { playing = !playing; label(); tick(); });
+    // the card sits lower on the page: its first run starts when it is first seen
+    var seenDec = false;
+    function firstSeen() { if (!seenDec) { seenDec = true; if (!mq.matches) play(false); } }
+    if (hasIO) new IntersectionObserver(function (es) { vis = es[es.length - 1].isIntersecting; if (vis) firstSeen(); tick(); }, { threshold: 0.25 }).observe(dec);
+    else firstSeen();
+    doc.addEventListener('visibilitychange', tick);
+    tick();
+  })();
+
+  /* ---------- numbers count up once, when their row first scrolls into view ----------
+     The final text is in the HTML. Under JavaScript with motion allowed the visible value starts at 0 and counts to the
+     real number in 900 ms (ease-out); a screen reader gets the full text from a hidden copy, and CSS reserves the width
+     (--w, tabular-nums) so nothing moves. Reduced motion, print and no IntersectionObserver show the final value. */
+  (function () {
+    var groups = $$('.wp-nums, .ld-stats').map(function (g) { return { box: g, vals: $$('.cnt-v[data-to]', g) }; })
+      .filter(function (g) { return g.vals.length; });
+    if (!groups.length) return;
+    var all = [];
+    groups.forEach(function (g) { all = all.concat(g.vals); });
+    function fmt(v, dec, sep) {
+      var s = v.toFixed(dec);
+      if (sep) { var p = s.split('.'); p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, sep); s = p.join('.'); }
+      return s;
+    }
+    function finishAll() { all.forEach(function (e) { if (e._final != null) e.textContent = e._final; }); }
+    window.addEventListener('beforeprint', finishAll);
+    onReduce.push(function () { all.forEach(function (e) { e._done = true; }); finishAll(); });
+    if (!hasIO || reduced) return;
+    all.forEach(function (e) {
+      e._final = e.textContent;
+      e._to = parseFloat(e.getAttribute('data-to'));
+      e._dec = +e.getAttribute('data-dec') || 0;
+      e._sep = e.getAttribute('data-sep') || '';
+      var cnt = e.closest ? e.closest('.cnt') : null;
+      if (cnt && cnt.parentNode) {
+        var sr = doc.createElement('span');
+        sr.className = 'sr-only';
+        sr.textContent = cnt.textContent;
+        cnt.parentNode.insertBefore(sr, cnt);
+        cnt.setAttribute('aria-hidden', 'true');
+      }
+      e.textContent = fmt(0, e._dec, e._sep);
+    });
+    function run(g) {
+      var t0 = performance.now();
+      function frame(now) {
+        var p = Math.min(1, (now - t0) / 900), k = 1 - Math.pow(1 - p, 3);
+        g.vals.forEach(function (e) {
+          if (e._done) return;
+          e.textContent = p >= 1 ? e._final : fmt(e._to * k, e._dec, e._sep);
+        });
+        if (p < 1 && !reduced) requestAnimationFrame(frame);
+        else g.vals.forEach(function (e) { e.textContent = e._final; });
+      }
+      requestAnimationFrame(frame);
+    }
+    var cntIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        cntIO.unobserve(en.target);
+        groups.forEach(function (g) { if (g.box === en.target) run(g); });
+      });
+    }, { threshold: 0.35 });
+    groups.forEach(function (g) { cntIO.observe(g.box); });
+  })();
+
+  /* ---------- selected work: sticky index follows the panel in view ----------
+     At 1100px and up the left index is sticky. The active panel is the one at the top third of the viewport (its top has
+     passed the line at one third of the screen height; the height is capped at 1100px so a very tall window, such as a
+     full-page capture, still gives a sensible answer). Before the first panel reaches that line nothing is active.
+     The line fill runs from the first dot to the last. Panel boxes are cached and re-read on resize (no layout
+     reads inside the scroll handler). Below 1100px the index is hidden by CSS and nothing runs. */
+  (function () {
+    var idx = $('.wk-idx');
+    if (!idx) return;
+    var links = $$('.wk-a', idx), fill = $('.wk-line i', idx);
+    var panels = links.map(function (a) { return doc.getElementById((a.getAttribute('href') || '').slice(1)); });
+    if (!links.length || panels.indexOf(null) !== -1) return;
+    var tops = [], hs = [], active = -2, ticking = false;
+    function measure() {
+      var y = window.pageYOffset;
+      tops = panels.map(function (p) { return p.getBoundingClientRect().top + y; });
+      hs = panels.map(function (p) { return p.offsetHeight; });
+      update();
+    }
+    function update() {
+      ticking = false;
+      if (!idx.offsetParent && getComputedStyle(idx).display === 'none') return;
+      var n = panels.length, probe = window.pageYOffset + Math.min(window.innerHeight, 1100) / 3, a = -1, f = 0, p = 0, i;
+      for (i = 0; i < n; i++) if (tops[i] <= probe) a = i;
+      if (a >= 0) {
+        if (a === n - 1 && probe > tops[a] + hs[a]) { p = 1; a = -1; }
+        else { f = Math.max(0, Math.min(1, (probe - tops[a]) / (hs[a] || 1))); p = n > 1 ? Math.min(1, (a + f) / (n - 1)) : 1; }
+      }
+      if (fill) fill.style.transform = 'scaleY(' + p.toFixed(3) + ')';
+      if (a !== active) {
+        active = a;
+        links.forEach(function (l, k) {
+          l.classList.toggle('is-active', k === a);
+          if (k === a) l.setAttribute('aria-current', 'true'); else l.removeAttribute('aria-current');
+        });
+      }
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(measure);
+      panels.forEach(function (p) { ro.observe(p); });
+      ro.observe(doc.body);
+    }
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(measure);
+    measure();
   })();
 
   /* ---------- zero-trust network canvas (decorative) ----------
@@ -482,7 +890,7 @@
   if (dlg && typeof dlg.showModal === 'function') {
     var lbImg = $('#lb-img'), lbCap = $('#lb-cap'), lbCount = $('#lb-count');
     var lbPrev = $('#lb-prev'), lbNext = $('#lb-next'), lbClose = $('#lb-close');
-    var items = [], idx = 0, opener = null;
+    var items = [], idx = 0, opener = null, lbClr = 0;
     var show = function () {
       var a = items[idx];
       lbImg.src = a.getAttribute('href');
@@ -510,6 +918,7 @@
       items = $$('a.lb[data-group="' + a.getAttribute('data-group') + '"]');
       idx = Math.max(0, items.indexOf(a));
       opener = a;
+      clearTimeout(lbClr);
       show();
       root.classList.add('lb-open');
       dlg.showModal();
@@ -534,7 +943,8 @@
     });
     dlg.addEventListener('close', function () {
       root.classList.remove('lb-open');
-      lbImg.removeAttribute('src');
+      clearTimeout(lbClr);
+      lbClr = setTimeout(function () { lbImg.removeAttribute('src'); }, 260);   // after the 200 ms fade, so the picture does not vanish first
       if (opener && opener.focus) opener.focus();
     });
   }
@@ -610,6 +1020,25 @@
     show(0);
   });
 
+  /* ---------- skills: one button opens (or closes) every "+N more" group. It is hidden in the HTML, so without JavaScript only the per-group buttons exist ---------- */
+  var skAll = $('[data-sk-all]');
+  var skMore = $$('.sk-more');
+  if (skAll && skMore.length) {
+    var skLab = skAll.querySelector('.sk-all-t');
+    var skSync = function () {
+      var all = skMore.every(function (d) { return d.open; });
+      skAll.setAttribute('aria-expanded', all ? 'true' : 'false');
+      if (skLab) skLab.textContent = all ? 'Show fewer skills' : 'Show all skills';
+    };
+    skAll.hidden = false;
+    skAll.addEventListener('click', function () {
+      var open = skAll.getAttribute('aria-expanded') !== 'true';
+      skMore.forEach(function (d) { d.open = open; });
+      skSync();
+    });
+    skMore.forEach(function (d) { d.addEventListener('toggle', skSync); });
+  }
+
   /* ---------- reference e-mail: assembled on click, shown as a mailto link ---------- */
   $$('button[data-reveal="inline"]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -662,8 +1091,9 @@
     });
   }
 
-  /* ---------- card spotlight follows the pointer (once per frame: read the box, then write) ---------- */
-  if (window.matchMedia && window.matchMedia('(hover: hover)').matches && !reduced) {
+  /* ---------- card spotlight and cursor-lit borders follow the pointer (one handler, once per frame: read the box, then write) ----------
+     .card uses --mx / --my for its inner glow; .lit-card (bento tiles, research cards, featured post) for the border ring. */
+  if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches && !reduced) {
     var spot = null, spotQueued = false;
     var paintSpot = function () {
       spotQueued = false;
@@ -674,20 +1104,21 @@
       spot = null;
     };
     doc.addEventListener('pointermove', function (e) {
-      var c = e.target.closest ? e.target.closest('.card') : null;
+      var c = e.target.closest ? e.target.closest('.card, .lit-card') : null;
       if (!c) return;
       spot = { card: c, x: e.clientX, y: e.clientY };
       if (!spotQueued) { spotQueued = true; requestAnimationFrame(paintSpot); }
     }, { passive: true });
   }
 
-  /* ---------- reduced-motion changes at runtime: simplest safe behaviour is a reload-free note ---------- */
+  /* ---------- reduced-motion changes at runtime: everything that waits for scrolling is shown at once ---------- */
   if (mq.addEventListener) {
     mq.addEventListener('change', function (e) {
       reduced = e.matches;
       if (reduced) {
-        reveals.forEach(function (el) { el.classList.add('in'); });
+        once.forEach(function (el) { el.classList.add('in'); });
         lits.forEach(function (el) { el.classList.add('in'); });
+        onReduce.forEach(function (fn) { fn(); });
       }
     });
   }
