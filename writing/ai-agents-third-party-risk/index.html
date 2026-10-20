@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src &#39;self&#39; data:; font-src &#39;self&#39;; style-src &#39;self&#39;; style-src-attr &#39;unsafe-inline&#39;; script-src &#39;self&#39; &#39;sha256-+/hyjqNIFJl8sAhB7t/qHTwT18igFNDdtSFrgki/Eds=&#39;; connect-src &#39;self&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">
 <title>What I learned building AI agents for third-party risk · Singha Junchan</title>
-<meta name="description" content="At Allianz Ayudhya I built two AI-agent prototypes for third-party risk, and learned from the CISO how governance and risk management work in practice.">
+<meta name="description" content="At Allianz Ayudhya I built two AI-agent prototypes for third-party risk that support people&#39;s judgement, and learned from the CISO how governance and risk management work in practice.">
 <link rel="canonical" href="https://singhaju.github.io/writing/ai-agents-third-party-risk/">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#070b14">
@@ -14,7 +14,7 @@
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Singha Junchan">
 <meta property="og:title" content="What I learned building AI agents for third-party risk · Singha Junchan">
-<meta property="og:description" content="At Allianz Ayudhya I built two AI-agent prototypes for third-party risk, and learned from the CISO how governance and risk management work in practice.">
+<meta property="og:description" content="At Allianz Ayudhya I built two AI-agent prototypes for third-party risk that support people&#39;s judgement, and learned from the CISO how governance and risk management work in practice.">
 <meta property="og:url" content="https://singhaju.github.io/writing/ai-agents-third-party-risk/">
 <meta property="og:image" content="https://singhaju.github.io/writing/ai-agents-third-party-risk/og.png">
 <meta property="og:image:width" content="1200">
@@ -24,7 +24,7 @@
 <meta property="article:author" content="Singha Junchan">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="What I learned building AI agents for third-party risk · Singha Junchan">
-<meta name="twitter:description" content="At Allianz Ayudhya I built two AI-agent prototypes for third-party risk, and learned from the CISO how governance and risk management work in practice.">
+<meta name="twitter:description" content="At Allianz Ayudhya I built two AI-agent prototypes for third-party risk that support people&#39;s judgement, and learned from the CISO how governance and risk management work in practice.">
 <meta name="twitter:image" content="https://singhaju.github.io/writing/ai-agents-third-party-risk/og.png">
 <meta name="twitter:image:alt" content="What I learned building AI agents for third-party risk. Singha Junchan.">
 <script data-font="../../assets/fonts/inter-latin-wght-normal.woff2">(function(){var d=document.documentElement;d.classList.add("js");var t;try{var q=new URLSearchParams(location.search).get("theme");t=(q==="light"||q==="dark")?q:localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}d.setAttribute("data-theme",t);window.__rvT=setTimeout(function(){d.classList.add("rv-off")},4000);var s=document.currentScript,f=s&&s.getAttribute("data-font");if(f&&location.protocol!=="file:"){var l=document.createElement("link");l.rel="preload";l.as="font";l.type="font/woff2";l.crossOrigin="anonymous";l.href=f;document.head.appendChild(l)}})();</script>
@@ -37,7 +37,7 @@
   "@context": "https://schema.org",
   "@type": "Article",
   "headline": "What I learned building AI agents for third-party risk",
-  "description": "At Allianz Ayudhya I built two AI-agent prototypes for third-party risk, and learned from the CISO how governance and risk management work in practice.",
+  "description": "At Allianz Ayudhya I built two AI-agent prototypes for third-party risk that support people's judgement, and learned from the CISO how governance and risk management work in practice.",
   "datePublished": "2026-10-18",
   "dateModified": "2026-10-18",
   "mainEntityOfPage": "https://singhaju.github.io/writing/ai-agents-third-party-risk/",
@@ -107,24 +107,26 @@
     <header class="p-head">
       <p class="p-meta"><time datetime="2026-10-18">18 October 2026</time><span class="sep" aria-hidden="true"> · </span><span>3 min read</span></p>
       <h1 id="post-h">What I learned building AI agents for third-party risk</h1>
-      <p class="p-sum">At Allianz Ayudhya I built two AI-agent prototypes for third-party risk, and learned from the CISO how governance and risk management work in practice.</p>
+      <p class="p-sum">At Allianz Ayudhya I built two AI-agent prototypes for third-party risk that support people&#39;s judgement, and learned from the CISO how governance and risk management work in practice.</p>
       <ul class="tags p-tags"><li>Risk management</li><li>AI agents</li><li>Internship</li></ul>
     </header>
     <div class="p-body">
       <p>Every company depends on vendors: cloud services, software, consultants. Each vendor is a risk, so companies check them. This is <strong class="kw">third-party risk management (TPRM)</strong>. From June to July 2026, I was an information security intern at Allianz Ayudhya in Bangkok, mentored by the <strong class="kw">Chief Information Security Officer</strong>, Apichai Wongchindakhun.</p>
       <h2 id="h-two-sides-of-the-same-problem">Two sides of the same problem</h2>
-      <p>Allianz Ayudhya sits on both sides. <strong class="kw">As a supplier</strong>, the Information Security team fills in long due-diligence questionnaires by hand, searching internal documents for every answer. <strong class="kw">As a buyer</strong>, business owners who rarely do it must run the risk process for each new vendor. I spent my first weeks learning how the team did both by hand.</p>
+      <p>Allianz Ayudhya sits on both sides. <strong class="kw">As a supplier</strong>, the Information Security team fills in long due-diligence questionnaires by hand, searching internal documents for every answer. <strong class="kw">As a buyer</strong>, business owners who rarely do it must run the risk process for each new vendor. I spent my first weeks learning how the team did both: I followed the process from start to end on real, anonymized cases, read many documents, and learned from my mentor how to look at risk: what to check, what matters most, and why.</p>
+      <h2 id="h-the-gaps">The gaps</h2>
+      <p>Along the way, I learned that the process still has gaps: much of it is done by hand, and many steps depend on people making the right call. I wanted to help close those gaps, not by replacing people, but by <strong class="kw">supporting their judgement</strong>.</p>
       <h2 id="h-agent-1-answering-questionnaires">Agent 1: answering questionnaires</h2>
-      <p>The first agent reads the company&#39;s policy and evidence documents, matches each question to the evidence and drafts the answer. Every answer comes with:</p>
-      <ul><li><strong class="kw">the evidence it used</strong>, so a person can check it;</li><li><strong class="kw">a reason</strong>, so the answer can be explained;</li><li><strong class="kw">a confidence score</strong>, so reviewers know where to look first.</li></ul>
-      <p>A <strong class="kw">gap analysis</strong> lists the questions the evidence cannot fully answer, and a fit-gap analysis compares the current controls with what the questionnaire asks for.</p>
+      <p>The first agent takes the first pass at a questionnaire. It reads the company&#39;s policy and evidence documents, matches each question to the evidence and drafts the answer. Every answer comes with:</p>
+      <ul><li><strong class="kw">the evidence it used</strong>, so a person can check it;</li><li><strong class="kw">a reason</strong>, so the answer can be explained, including how to answer without giving away internal information;</li><li><strong class="kw">a confidence score</strong>, so reviewers know where to look first.</li></ul>
+      <p>A <strong class="kw">gap analysis</strong> shows where current controls fall short and suggests how to close each gap, and a fit-gap analysis compares the current controls with what the questionnaire asks for. But the agent only does the first job: <strong class="kw">a person checks every answer</strong>, and I designed it that way on purpose.</p>
       <h2 id="h-agent-2-guiding-business-owners">Agent 2: guiding business owners</h2>
-      <p>The second agent is a guided assistant for <strong class="kw">business owners who are new to the process</strong>. It explains each step and the key ideas, keeps track of where the owner is, checks their inputs at each step and flags anything that needs a careful review, so mistakes are caught early.</p>
+      <p>The second agent is for <strong class="kw">business owners who are new to the process</strong>. It does not just help them fill in information: it <strong class="kw">teaches them to run the process themselves</strong>, guides them step by step, checks their inputs at each step and warns them about anything important they should not miss. It is a support tool, not one that does the work for them.</p>
       <h2 id="h-how-i-worked">How I worked</h2>
       <p>Requirements with the team first, then the design, the build and tests on real, anonymized cases. I showed my progress often and changed both agents based on the team&#39;s feedback. I demonstrated the questionnaire agent on 6 July 2026 and presented both agents on 31 July 2026.</p>
       <h2 id="h-what-i-learned">What I learned</h2>
-      <p>The tools were the smaller part. From my mentor I learned how information security <strong class="kw">governance and risk management</strong> work in practice, and what a CISO&#39;s work involves.</p>
-      <p>For the agents, the lesson was trust. In risk work, an answer without its evidence is not useful, however good it sounds. Showing the evidence, the reason and how confident the agent is lets a person check the work instead of redoing it, and keeps a person in charge of the final answer.</p>
+      <p>The tools were the smaller part. From my mentor I learned how information security, <strong class="kw">governance and risk management</strong> work in practice, how each department works, and what a CISO&#39;s work involves.</p>
+      <p>Building the agents taught me my biggest lesson: <mark class="hl">AI is a tool, not everything.</mark> In security, it is at its best when it supports people, not when it replaces their thinking, and the responsibility for how we use it always stays with us. That is why every answer shows its evidence, its reason and how confident the agent is: a person can check the work instead of redoing it, and stays in charge of the final answer.</p>
       <div class="p-note" role="note"><p>The screens and documents are internal to Allianz Ayudhya, so none are shown. More on the <a href="../../work/allianz-tprm/">case page</a>.</p></div>
     </div>
     <p class="c-back c-back-end"><a href="../../#writing"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg><span>Back to all writing</span></a></p>
@@ -135,7 +137,7 @@
   <div class="wrap foot">
     <div>
       <p class="foot-main">Singha Junchan · Pathum Thani, Thailand</p>
-      <p class="foot-small">Last updated <time datetime="2026-10-18">18 October 2026</time>. No tracking and no cookies.</p>
+      <p class="foot-small">Last updated <time datetime="2026-10-20">20 October 2026</time>. No tracking and no cookies.</p>
     </div>
     <a class="btn btn-ghost btn-sm" href="#top"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg><span>Back to top</span></a>
   </div>
