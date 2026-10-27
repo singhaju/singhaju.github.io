@@ -108,7 +108,7 @@
     window.addEventListener('resize', measureOld, { passive: true });
   }
 
-  /* sliding bar under the current nav link (desktop only; CSS hides it on phones). Nothing is current while the hero is in view. */
+  /* sliding box behind the current nav link (desktop only; CSS hides it on phones). The first page counts as "Intro". */
   var navEl = $('#nav');
   var navBar = navEl ? $('.nav-bar', navEl) : null;
   function placeBar(snap) {
@@ -116,10 +116,12 @@
     var a = $('a[aria-current="true"]', navEl);
     if (!a || !navEl.offsetWidth || !a.offsetWidth) { navBar.classList.remove('on'); return; }
     var n = navEl.getBoundingClientRect(), r = a.getBoundingClientRect();
-    var inset = parseFloat(getComputedStyle(a).paddingLeft) || 0;
+    var vpad = Math.round(r.height * 0.12);
     var first = !navBar.classList.contains('on');
     if (snap || first) navBar.classList.add('snap');
-    navBar.style.transform = 'translate(' + (r.left - n.left + inset).toFixed(1) + 'px,' + (r.bottom - n.top - 8).toFixed(1) + 'px) scaleX(' + Math.max(0, r.width - inset * 2).toFixed(1) + ')';
+    navBar.style.width = r.width.toFixed(1) + 'px';
+    navBar.style.height = (r.height - vpad * 2).toFixed(1) + 'px';
+    navBar.style.transform = 'translate(' + (r.left - n.left).toFixed(1) + 'px,' + (r.top - n.top + vpad).toFixed(1) + 'px)';
     if (snap || first) { void navBar.offsetWidth; navBar.classList.remove('snap'); }
     navBar.classList.add('on');
   }
@@ -132,16 +134,22 @@
     var spyIO = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
+        // v5: a screen reports its section through data-sec (eighteen screens, six nav links)
+        var secKey = en.target.getAttribute('data-sec') || en.target.id;
+        if (secKey === 'education') secKey = 'credentials';       // Education sits under the Credentials link (the first page and At a glance share data-sec "about" = Intro)
         Object.keys(spyLinks).forEach(function (k) {
-          if (k === en.target.id) spyLinks[k].setAttribute('aria-current', 'true');
+          if (k === secKey) spyLinks[k].setAttribute('aria-current', 'true');
           else spyLinks[k].removeAttribute('aria-current');
         });
         placeBar(false);
       });
     }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
-    Object.keys(spyLinks).forEach(function (k) { var s = doc.getElementById(k); if (s) spyIO.observe(s); });
+    // v4: watch every screen, so a screen with no nav link (education, focus, projects ...) clears the bar
+    var spyTargets = $$('section.screen[id]');
+    if (!spyTargets.length) spyTargets = Object.keys(spyLinks).map(function (k) { return doc.getElementById(k); }).filter(Boolean);
+    spyTargets.forEach(function (s) { spyIO.observe(s); });
     var topEl = $('#top');
-    if (topEl) {
+    if (topEl && !spyLinks.about) {
       new IntersectionObserver(function (en) {
         if (en[0].isIntersecting) { Object.keys(spyLinks).forEach(function (k) { spyLinks[k].removeAttribute('aria-current'); }); placeBar(false); }
       }, { rootMargin: '-45% 0px -50% 0px' }).observe(topEl);
@@ -213,6 +221,46 @@
       onceIO.observe(t);
     });
   }
+
+  /* ---------- v10: page arrival ----------
+     The blocks of every page after the hero (heading, text, picture, tiles, rows) fade in and rise a little, one after
+     another, when they first come into view. Each block is watched on its own, so tall pages (small windows, phones)
+     reveal as you scroll, and a page that fits the window reveals all at once with a stagger. A failsafe shows every block
+     of a page 1.4 s after the page is mostly in view. Nothing is hidden without JavaScript or with reduced motion. */
+  (function () {
+    if (!hasIO || reduced) return;
+    var SEL = '.scr-head,.gl-h,.gl-grid>li,.ch-head,.st-copy,.st-vis,.ch-foot,.rov-top,.rt-wrap,.tpc-side,.tpc-rows>li,.tm-intro,.tm-cards>li,.pm-grid>li,.cw-certs>li,.cw-side>*,.ed6-deg,.ed6-sk>.sk-head,.sk6-c,.wf-list>li,.fc-list>li,.wf-all,.ref-grid>li,.contact-card';
+    var pages = $$('section.screen:not(.hero):not(.rail-sec), .rail-sec .chapter');
+    var byPage = [];
+    pages.forEach(function (pg) {
+      var list = [], n = 0;
+      $$(SEL, pg).forEach(function (el) {
+        if (el.closest('dialog') || el.classList.contains('anchor-alias')) return;
+        if (el.parentElement && el.parentElement.closest('.rv')) return;         // a block inside a block is revealed with its parent
+        if (el.classList.contains('st-vis') && el.querySelector('.rev-fig')) return; // figures keep their own wipe
+        el.classList.add('rv');
+        el.style.setProperty('--rv-i', Math.min(n++, 8));
+        list.push(el);
+      });
+      if (list.length) byPage.push({ pg: pg, list: list });
+    });
+    var show = function (el) { el.classList.add('rv-in'); };
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting || en.boundingClientRect.top < 0) { show(en.target); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.01 });
+    var pio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        pio.unobserve(en.target);
+        var rec = byPage.filter(function (b) { return b.pg === en.target; })[0];
+        if (rec) setTimeout(function () { rec.list.forEach(function (el) { if (!el.classList.contains('rv-in')) { show(el); io.unobserve(el); } }); }, 1400);
+      });
+    }, { threshold: 0.6 });
+    byPage.forEach(function (b) { b.list.forEach(function (el) { io.observe(el); }); pio.observe(b.pg); });
+    onReduce.push(function () { byPage.forEach(function (b) { b.list.forEach(show); }); });
+  })();
 
   /* ---------- staggered entrance (bento tiles, the 'what makes it new' cards, the work impact cards): the grid gets .in once, CSS staggers the children ---------- */
   var grids = $$('.bento, .wp-pts, .wp-impact');
@@ -573,7 +621,7 @@
      real number in 900 ms (ease-out); a screen reader gets the full text from a hidden copy, and CSS reserves the width
      (--w, tabular-nums) so nothing moves. Reduced motion, print and no IntersectionObserver show the final value. */
   (function () {
-    var groups = $$('.wp-nums, .ld-stats').map(function (g) { return { box: g, vals: $$('.cnt-v[data-to]', g) }; })
+    var groups = $$('.wp-nums, .ld-stats, .ld5-stats, .rt-track').map(function (g) { return { box: g, vals: $$('.cnt-v[data-to]', g) }; })
       .filter(function (g) { return g.vals.length; });
     if (!groups.length) return;
     var all = [];
@@ -1020,6 +1068,74 @@
     show(0);
   });
 
+  /* ---------- v10: role show (TU Alert): one small device, the screens of each role in turn, then the next role ---------- */
+  $$('[data-roleshow]').forEach(function (rs) {
+    var tabs = $$('.rs-tab', rs), panels = $$('.rs-panel', rs), cap = $('.rs-cap', rs);
+    var prev = $('.rs-prev', rs), next = $('.rs-next', rs), pp = $('.rs-pp', rs);
+    if (!tabs.length || tabs.length !== panels.length) return;
+    var interval = parseInt(rs.getAttribute('data-interval'), 10) || 2600;
+    var role = 0, idx = 0, timer = 0, hovering = false, inside = false, seen = !hasIO, tabOn = !doc.hidden, paused = reduced;
+    rs.classList.add('is-live');
+    function slides(r) { return $$('.rs-slide', panels[r]); }
+    function show(r, i) {
+      var nr = (r + panels.length) % panels.length, sl = slides(nr);
+      role = nr; idx = (i + sl.length) % sl.length;
+      tabs.forEach(function (t, k) {
+        t.classList.toggle('is-on', k === role);
+        t.setAttribute('aria-selected', k === role ? 'true' : 'false');
+        if (k === role) t.removeAttribute('tabindex'); else t.setAttribute('tabindex', '-1');
+      });
+      panels.forEach(function (p, k) { p.classList.toggle('is-on', k === role); p.hidden = k !== role; });
+      sl.forEach(function (a, k) {
+        var on = k === idx;
+        a.classList.toggle('is-on', on);
+        if (on) { a.removeAttribute('aria-hidden'); a.removeAttribute('tabindex'); } else { a.setAttribute('aria-hidden', 'true'); if (a.tagName === 'A') a.setAttribute('tabindex', '-1'); }
+        var im = a.querySelector && a.querySelector('img');
+        if (im && im.getAttribute('loading') === 'lazy' && (k === idx || k === idx + 1)) im.setAttribute('loading', 'eager');
+      });
+      $$('.rs-dots li', panels[role]).forEach(function (d, k) { d.classList.toggle('is-on', k === idx); });
+      if (cap) cap.textContent = sl[idx].getAttribute('data-cap') || '';
+    }
+    function step(d) {
+      var sl = slides(role), n = idx + d;
+      if (n >= sl.length) show(role + 1, 0);
+      else if (n < 0) { var pr = (role - 1 + panels.length) % panels.length; show(pr, slides(pr).length - 1); }
+      else show(role, n);
+    }
+    function canRun() { return !paused && !hovering && !inside && seen && tabOn && !root.classList.contains('lb-open'); }
+    function sync() {
+      if (timer) { clearInterval(timer); timer = 0; }
+      rs.classList.toggle('is-paused', !canRun());
+      if (canRun()) timer = setInterval(function () { step(1); }, interval);
+    }
+    function setPaused(p) {
+      paused = p;
+      if (pp) { pp.setAttribute('aria-pressed', p ? 'true' : 'false'); pp.setAttribute('aria-label', pp.getAttribute(p ? 'data-play' : 'data-pause')); pp.classList.toggle('is-paused', p); }
+      sync();
+    }
+    tabs.forEach(function (t, k) {
+      t.addEventListener('click', function () { show(k, 0); sync(); });
+      t.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault(); var k2 = (k + d + tabs.length) % tabs.length; show(k2, 0); tabs[k2].focus(); sync();
+      });
+    });
+    if (prev) prev.addEventListener('click', function () { step(-1); sync(); });
+    if (next) next.addEventListener('click', function () { step(1); sync(); });
+    if (pp) pp.addEventListener('click', function () { setPaused(!paused); });
+    rs.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { hovering = true; sync(); } });
+    rs.addEventListener('pointerleave', function () { hovering = false; sync(); });
+    rs.addEventListener('focusin', function () { inside = true; sync(); });
+    rs.addEventListener('focusout', function (e) { if (!rs.contains(e.relatedTarget)) { inside = false; sync(); } });
+    doc.addEventListener('visibilitychange', function () { tabOn = !doc.hidden; sync(); });
+    doc.addEventListener('close', function () { sync(); }, true);
+    if (hasIO) new IntersectionObserver(function (en) { seen = en[en.length - 1].isIntersecting; sync(); }, { threshold: 0.3 }).observe(rs);
+    if (mq.addEventListener) mq.addEventListener('change', function (e) { if (e.matches) setPaused(true); });
+    setPaused(paused);
+    show(0, 0);
+  });
+
   /* ---------- skills: one button opens (or closes) every "+N more" group. It is hidden in the HTML, so without JavaScript only the per-group buttons exist ---------- */
   var skAll = $('[data-sk-all]');
   var skMore = $$('.sk-more');
@@ -1122,5 +1238,284 @@
       }
     });
   }
+
+  /* =====================================================================================================================
+     v4: detail dialogs, one-screen safety check, dot navigation, swipe-row counters
+     ===================================================================================================================== */
+
+  /* ---------- detail dialogs (<dialog class="dt">) ----------
+     A card link (href="#d-...") opens its dialog with showModal(). Close: the Close button, Esc, a click on the backdrop.
+     Opening pushes a history entry (#d-...), so the phone's Back button closes the sheet instead of leaving the site.
+     A page loaded with #d-... in the address opens that dialog. Focus goes back to the card that opened it.
+     Opening one dialog from inside another ("Open the project") swaps them and keeps a single history entry. */
+  (function () {
+    var dts = $$('dialog.dt');
+    if (!dts.length || typeof dts[0].showModal !== 'function') return;
+    var opener = null, swapping = false, quiet = false;
+    var lb = $('#lightbox');
+    function isDt(el) { return !!el && el.tagName === 'DIALOG' && el.classList.contains('dt'); }
+    function current() { return $('dialog.dt[open]'); }
+    function revealAll(d) {                              // nothing inside a dialog may wait for scrolling
+      $$('.rev-h, .rev-fig, .bento, .wp-pts, .wp-impact, .lit', d).forEach(function (el) { el.classList.add('in'); });
+    }
+    function openDt(d, from, how) {                      // how: 'push' | 'replace' | 'none'
+      if (!isDt(d) || d.open) return;
+      var prev = current();
+      if (prev) { prev.__swapped = true; swapping = true; prev.close(); swapping = false; how = 'replace'; }   // the close event arrives later: __swapped lets it skip, so the first opener keeps the focus return
+      else opener = from || doc.activeElement;
+      revealAll(d);
+      var st = { dt: d.id, pushed: how === 'push' || (prev && prev.__pushed) };
+      try {
+        if (how === 'push') history.pushState(st, '', '#' + d.id);
+        else if (how === 'replace') history.replaceState(st, '', '#' + d.id);
+      } catch (e) { /* file: pages and old browsers: no history entry */ }
+      d.__pushed = !!st.pushed;
+      d.showModal();
+      var body = $('.dt-body', d);
+      if (body) body.scrollTop = 0;
+      paintRead(d);
+    }
+    function paintRead(d) {                              // case pages: the thin line under the bar follows the reading position
+      var prog = $('.cs-prog', d), body = $('.dt-body', d);
+      if (!prog || !body) return;
+      var max = body.scrollHeight - body.clientHeight, p = max > 0 ? Math.min(1, Math.max(0, body.scrollTop / max)) : 0;
+      prog.style.setProperty('--p', p.toFixed(4));
+      prog.setAttribute('aria-valuenow', String(Math.round(p * 100)));
+    }
+    function watchRead(d) {
+      var body = $('.dt-body', d), tick = false;
+      if (!body || !$('.cs-prog', d)) return;
+      body.addEventListener('scroll', function () {
+        if (tick) return; tick = true;
+        requestAnimationFrame(function () { tick = false; paintRead(d); });
+      }, { passive: true });
+    }
+    function leaveHash(d) {                              // after a close the address goes back to where it was
+      if (quiet || swapping) return;
+      var st = history.state;
+      if (st && st.dt === d.id) {
+        if (d.__pushed) { history.back(); }
+        else { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ignore */ } }
+      }
+    }
+    dts.forEach(function (d) {
+      watchRead(d);
+      d.addEventListener('close', function () {
+        if (d.__swapped) { d.__swapped = false; return; }   // swapped for another dialog: nothing to restore yet
+        leaveHash(d);
+        if (swapping) return;
+        var o = opener; opener = null;
+        if (o && o.focus && doc.contains(o)) { try { o.focus({ preventScroll: true }); } catch (e) { o.focus(); } }
+      });
+      d.addEventListener('click', function (e) {
+        if (e.target === d) d.close();                   // a click on the backdrop (the dialog box itself has no padding)
+      });
+    });
+    doc.addEventListener('click', function (e) {
+      var x = e.target.closest ? e.target.closest('[data-dt-close]') : null;
+      if (x) { var d = x.closest('dialog.dt'); if (d) d.close(); return; }
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var a = e.target.closest ? e.target.closest('a[href^="#d-"]') : null;
+      if (!a) return;
+      var t = doc.getElementById(a.getAttribute('href').slice(1));
+      if (!isDt(t)) return;
+      e.preventDefault();
+      openDt(t, a, 'push');
+    });
+    window.addEventListener('popstate', function () {
+      var want = location.hash.indexOf('#d-') === 0 ? doc.getElementById(location.hash.slice(1)) : null;
+      if (!isDt(want)) want = null;
+      var cur = current();
+      if (lb && lb.open) lb.close();
+      if (cur && cur !== want) { quiet = true; cur.close(); quiet = false; }
+      if (want && !want.open) { opener = null; openDt(want, null, 'none'); want.__pushed = true; }
+    });
+    if (location.hash.indexOf('#d-') === 0) {
+      var first = doc.getElementById(location.hash.slice(1));
+      if (isDt(first)) {
+        var go = function () { openDt(first, null, 'replace'); };
+        if (doc.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+      }
+    }
+  })();
+
+  /* ---------- v6: rail sections (Experience, Research) ----------
+     Each section has a nav.rail of real links (a[data-rail]) to its chapters. A band across the upper middle of the window
+     (rootMargin -35% / -55%) decides the current chapter: the last chapter whose top has passed the band's middle line.
+     The rail marks it with aria-current="true", fills the line down to its dot, and (below 1024px, where the rail is a strip
+     of chips) scrolls the strip so the current chip is centred. A click on a link to a chapter scrolls there, puts focus on the
+     chapter heading and updates the address (no history entry). Layout is read only when the band is crossed or the rail resizes. */
+  (function () {
+    var secs = $$('.rail-sec');
+    if (!secs.length) return;
+    var wide = window.matchMedia ? window.matchMedia('(min-width:1024px)') : null;
+    function isWide() { return !wide || wide.matches; }
+    secs.forEach(function (sec) {
+      var nav = $('nav.rail', sec), list = nav && $('.rl-list', nav), line = nav && $('.rl-line', nav);
+      if (!nav || !list) return;
+      var links = $$('a.rl-a[data-rail]', nav);
+      var chaps = links.map(function (a) { return doc.getElementById(a.getAttribute('data-rail')); });
+      var cur = -2;
+      function centre(el) { var r = el.getBoundingClientRect(); return r.top + r.height / 2; }
+      function geometry() {                                   // the line runs from the first dot to the last one
+        if (!line || !links.length) return;
+        var d0 = $('.rl-dot', links[0]), d1 = $('.rl-dot', links[links.length - 1]);
+        if (!d0 || !d1) return;
+        var top = centre(d0) - nav.getBoundingClientRect().top, h = centre(d1) - centre(d0);
+        nav.style.setProperty('--line-top', top.toFixed(1) + 'px');
+        nav.style.setProperty('--line-h', Math.max(0, h).toFixed(1) + 'px');
+        paintFill();
+      }
+      function paintFill() {
+        var f = 0;
+        if (cur > 0 && links.length > 1) {
+          var d0 = $('.rl-dot', links[0]), dn = $('.rl-dot', links[links.length - 1]), dc = $('.rl-dot', links[cur]);
+          var span = centre(dn) - centre(d0);
+          if (dc && span > 0) f = Math.min(1, Math.max(0, (centre(dc) - centre(d0)) / span));
+        }
+        nav.style.setProperty('--fill', f.toFixed(4));
+      }
+      function setCurrent(i) {
+        if (i === cur) return;
+        cur = i;
+        // v10 r3: links that point to the same chapter (a topic page and its two papers) are all current together
+        links.forEach(function (a, k) { if (k === i || (i >= 0 && chaps[k] && chaps[k] === chaps[i])) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+        paintFill();
+        if (i >= 0 && isWide() && nav.parentNode && nav.parentNode.scrollHeight > nav.parentNode.clientHeight + 1) {   // part 6: a long rail scrolls inside its own box to keep the current link in view
+          var wrap = nav.parentNode, wr = wrap.getBoundingClientRect(), lr = links[i].getBoundingClientRect();
+          if (lr.top < wr.top + 8) wrap.scrollTop += lr.top - wr.top - 8;
+          else if (lr.bottom > wr.bottom - 8) wrap.scrollTop += lr.bottom - wr.bottom + 8;
+        }
+        if (i >= 0 && !isWide() && links[i].scrollIntoView) {
+          var r = nav.getBoundingClientRect();
+          if (r.top >= 0 && r.bottom <= window.innerHeight) {  // never move the page itself, only the strip
+            links[i].scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+          }
+        }
+      }
+      var hit = {}, inSec = false, want = -1;                   // chapters (by index) that cross the band, whether the section does, the rail link last clicked
+      links.forEach(function (a, k) { a.addEventListener('click', function () { want = k; decide(); }); });
+      function decide() {
+        var i, found = -1, hits = [];
+        for (i = 0; i < chaps.length; i++) { if (hit[i]) { found = i; hits.push(i); } }   // two at once (band on a boundary): the later one
+        if (hits.length > 1) {                                           // part 5: two chapters side by side share one row; keep the one asked for or already current
+          var tA = chaps[hits[hits.length - 2]].getBoundingClientRect().top, tB = chaps[found].getBoundingClientRect().top;
+          if (Math.abs(tA - tB) < 8) found = hits.indexOf(want) >= 0 ? want : (hits.indexOf(cur) >= 0 ? cur : hits[0]);
+        }
+        if (found < 0) {                                                 // no chapter under the band: in a gap the current one stays
+          if (!inSec || (chaps[0] && chaps[0].getBoundingClientRect().top > window.innerHeight * 0.45)) setCurrent(-1);
+          return;
+        }
+        setCurrent(found);
+      }
+      if (hasIO) {
+        var io = new IntersectionObserver(function (es) {
+          es.forEach(function (en) {
+            var found = false;
+            chaps.forEach(function (c, k) { if (c === en.target) { hit[k] = en.isIntersecting; found = true; } });
+            if (!found && en.target === sec) inSec = en.isIntersecting;
+          });
+          decide();
+        }, { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
+        chaps.forEach(function (c) { if (c) io.observe(c); });
+        io.observe(sec);
+      }
+      if (window.ResizeObserver) { new ResizeObserver(geometry).observe(nav); } else { geometry(); window.addEventListener('resize', geometry, { passive: true }); }
+      window.addEventListener('load', geometry);
+      if (wide && wide.addEventListener) wide.addEventListener('change', function () { geometry(); decide(); });
+    });
+    // links to a chapter (rail, "Next:" links, status rows): scroll, focus the heading, update the address
+    doc.addEventListener('click', function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+      if (!a) return;
+      var id = a.getAttribute('href').slice(1);
+      var el = id ? doc.getElementById(id) : null;
+      if (!el || !el.classList.contains('chapter') || !el.closest('.rail-main')) return;
+      e.preventDefault();
+      el.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
+      var h = $('.ch-h, .st-title', el);
+      if (h) { try { h.focus({ preventScroll: true }); } catch (err) { h.focus(); } }
+      if (history.replaceState) { try { history.replaceState(history.state, '', '#' + id); } catch (err) { /* file: or sandboxed */ } }
+    });
+  })();
+
+  /* ---------- dot navigation: the dot of the screen in view is current ---------- */
+  (function () {
+    var dots = $$('#dots a[data-dot]');
+    if (!dots.length || !hasIO) return;
+    var map = {};
+    dots.forEach(function (a) { map[a.getAttribute('data-dot')] = a; });
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        Object.keys(map).forEach(function (k) {
+          if (k === en.target.id) map[k].setAttribute('aria-current', 'true'); else map[k].removeAttribute('aria-current');
+        });
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    Object.keys(map).forEach(function (k) { var el = doc.getElementById(k); if (el) io.observe(el); });
+  })();
+
+  /* ---------- v5: status-track chips scroll to their screen (smooth, or at once with reduced motion) ---------- */
+  (function () {
+    $$('a.rt-chip').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var id = (a.getAttribute('href') || '').replace(/^#/, '');
+        var el = id ? doc.getElementById(id) : null;
+        if (!el || !el.scrollIntoView) return;
+        e.preventDefault();
+        el.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
+        if (history.replaceState) { try { history.replaceState(null, '', '#' + id); } catch (err) { /* file: or sandboxed */ } }
+      });
+    });
+  })();
+
+  /* ---------- swipe rows (tablet and phone): a small "2 / 5" counter under each row ---------- */
+  (function () {
+    $$('[data-swipe]').forEach(function (row) {
+      var items = $$('.cd', row);
+      if (items.length < 2) return;
+      var cnt = doc.createElement('p');
+      cnt.className = 'cds-count';
+      cnt.setAttribute('aria-hidden', 'true');
+      row.parentNode.insertBefore(cnt, row.nextSibling);
+      var raf = 0;
+      function paint() {
+        raf = 0;
+        var r = row.getBoundingClientRect(), best = 0, bd = 1e9;
+        items.forEach(function (it, i) {
+          var b = it.getBoundingClientRect(), d = Math.abs(b.left - r.left - 16);
+          if (b.right > r.left + 8 && d < bd) { bd = d; best = i; }
+        });
+        if (row.scrollLeft + row.clientWidth >= row.scrollWidth - 4) best = items.length - 1 - (row.classList.contains('rgs') ? 0 : 0);
+        cnt.textContent = (best + 1) + ' / ' + items.length;
+      }
+      row.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(paint); }, { passive: true });
+      window.addEventListener('resize', function () { if (!raf) raf = requestAnimationFrame(paint); }, { passive: true });
+      paint();
+    });
+  })();
+
+  /* ---------- v10: one scroll = one page ----------
+     Snapping is switched on (class "snap" on <html>) only on windows of 1100x640 or more, and only while every page fits the window,
+     so that a page taller than the window never traps the wheel. Smaller windows and phones scroll freely. */
+  (function () {
+    var wide = window.matchMedia('(min-width:1100px) and (min-height:640px)');
+    var timer = 0;
+    function fit() {
+      var ok = wide.matches;
+      if (ok) {
+        var vh = window.innerHeight + 6;
+        $$('section.screen:not(.rail-sec), .rail-sec .chapter').forEach(function (p) { if (p.offsetHeight > vh) ok = false; });
+      }
+      root.classList.toggle('snap', ok);
+    }
+    function later() { clearTimeout(timer); timer = setTimeout(fit, 160); }
+    fit();
+    window.addEventListener('load', fit);
+    window.addEventListener('resize', later, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  })();
 
 })();

@@ -86,8 +86,8 @@
     <nav class="nav" id="nav" aria-label="Primary">
       <ul>
         <li><a href="../../#experience">Experience</a></li>
-        <li><a href="../../#work">Work</a></li>
         <li><a href="../../#research">Research</a></li>
+        <li><a href="../../#projects">Projects</a></li>
         <li><a href="../../#credentials">Credentials</a></li>
         <li><a href="../../#writing">Writing</a></li>
         <li><a href="../../#contact">Contact</a></li>
@@ -101,6 +101,7 @@
     </div>
   </div>
 </header>
+
 <main id="main" tabindex="-1">
 <article class="post" id="top" aria-labelledby="post-h">
   <div class="wrap p-wrap">
@@ -116,7 +117,7 @@
       <h2 id="h-the-problem">The problem</h2>
       <p>Large companies run many Kubernetes clusters, often in different security domains, and a workload in one domain calls a service in another. Existing designs often trust a central policy controller, or check only some of the policy records. The service that enforces the decision cannot check that <strong class="kw">every allow and deny rule</strong> for the request was really evaluated.</p>
       <h2 id="h-the-idea">The idea</h2>
-      <ul><li><strong class="kw">Every decision carries a proof</strong> of exactly which scope it covered, checked against the complete, committed set of rules.</li><li>The proof holds only what that decision needs: the evidence for an allow differs from the evidence for an explicit deny or a default deny.</li><li>Decisions are <strong class="kw">signed with ML-DSA</strong>, and keys are exchanged with <strong class="kw">ML-KEM</strong>.</li><li>The authorization state is <strong class="kw">anchored on a ledger every epoch</strong>, so a failure or a rollback cannot quietly widen permissions.</li></ul>
+      <ul><li><strong class="kw">Every decision carries a proof</strong> of exactly which scope it covered, checked against the complete, committed set of rules.</li><li>The proof holds only what that decision needs: the evidence for an allow differs from the evidence for an explicit deny or a default deny.</li><li>Decisions are <strong class="kw">signed with ML-DSA</strong>, and keys are exchanged with <strong class="kw">ML-KEM</strong>.</li><li>The authorisation state is <strong class="kw">anchored on a ledger every epoch</strong>, so a failure or a rollback cannot quietly widen permissions.</li></ul>
       <h2 id="h-not-paying-on-every-request">Not paying on every request</h2>
       <p>Post-quantum signatures are much larger than the ones they replace, and checking them on every request adds up. So the full check happens once: a verified decision is bound to the workload&#39;s session, and later requests use a <strong class="kw">lightweight check</strong>. The ledger is used per epoch, not per request. When rules or revocations change, only the affected cached decisions are thrown away.</p>
       <h2 id="h-what-i-built">What I built</h2>

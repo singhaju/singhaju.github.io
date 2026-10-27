@@ -86,8 +86,8 @@
     <nav class="nav" id="nav" aria-label="Primary">
       <ul>
         <li><a href="../../#experience">Experience</a></li>
-        <li><a href="../../#work">Work</a></li>
         <li><a href="../../#research">Research</a></li>
+        <li><a href="../../#projects">Projects</a></li>
         <li><a href="../../#credentials">Credentials</a></li>
         <li><a href="../../#writing">Writing</a></li>
         <li><a href="../../#contact">Contact</a></li>
@@ -101,6 +101,7 @@
     </div>
   </div>
 </header>
+
 <main id="main" tabindex="-1">
 <article class="post" id="top" aria-labelledby="post-h">
   <div class="wrap p-wrap">
@@ -118,7 +119,7 @@
       <h2 id="h-the-pattern-i-keep-using">The pattern I keep using</h2>
       <ul><li><strong class="kw">Do the heavy work once.</strong> Compile the rules ahead of time, or verify the caller carefully once and issue a short-lived pass.</li><li><strong class="kw">Make each request cheap.</strong> Check a small token or a precompiled index, so each request does little work.</li><li><strong class="kw">Keep a commitment for later.</strong> Merkle trees and ledger anchors make any change to rules or logs show.</li><li><strong class="kw">Fail safe.</strong> A deny rule wins, and revoking access removes only what is affected.</li></ul>
       <h2 id="h-where-each-project-fits">Where each project fits</h2>
-      <ul><li><strong class="kw">U-HAP</strong> (published, Best Paper at IEEE JCSSE 2026, 2nd of 4 authors): one model for every Kubernetes access rule, compiled ahead of time; deny always wins. <a href="../../writing/why-deny-wins/">Read the post</a></li><li><strong class="kw">FEDAC</strong> (under review at IEEE TDSC, 1st of 4 authors): zero-trust checks across clusters with a short-lived pass. <a href="../../writing/zero-trust-check-once/">Read the post</a></li><li><strong class="kw">ZKAudit</strong> (accepted at KST 2027): an auditor proves they may audit without saying who they are. <a href="../../writing/audit-without-revealing-who/">Read the post</a></li><li><strong class="kw">PQ-SCVA-MCK</strong> (submitted): post-quantum signed proofs for access decisions across clusters. <a href="../../writing/post-quantum-access-decisions/">Read the post</a></li><li><strong class="kw">SWARM-Fog</strong> (submitted): edge servers that pull work like a swarm and recover from failures, with no central controller.</li><li><strong class="kw">MoCA</strong> (in preparation): keeping an AI agent inside what its user allowed. <a href="../../writing/ai-agent-hidden-instruction/">Read the post</a></li><li><strong class="kw">ZK-ALBA</strong>, an <strong class="kw">encrypted SIEM</strong> and <strong class="kw">FRESCO</strong> (in preparation): audit proofs bound to what each auditor may see, attack detection on encrypted logs shared by several companies, and freshness proofs for cloud services that scale up and down.</li></ul>
+      <ul><li><strong class="kw">U-HAP</strong> (published, Best Paper at IEEE JCSSE 2026, second author): one model for every Kubernetes access rule, compiled ahead of time; deny always wins. <a href="../../writing/why-deny-wins/">Read the post</a></li><li><strong class="kw">FEDAC</strong> (under review at IEEE TDSC, first author): zero-trust checks across clusters with a short-lived pass. <a href="../../writing/zero-trust-check-once/">Read the post</a></li><li><strong class="kw">ZKAudit</strong> (accepted at KST 2027): an auditor proves they may audit without saying who they are. <a href="../../writing/audit-without-revealing-who/">Read the post</a></li><li><strong class="kw">PQ-SCVA-MCK</strong> (submitted): post-quantum signed proofs for access decisions across clusters. <a href="../../writing/post-quantum-access-decisions/">Read the post</a></li><li><strong class="kw">SWARM-Fog</strong> (submitted): edge servers that pull work like a swarm and recover from failures, with no central controller.</li><li><strong class="kw">MoCA</strong> (in preparation): keeping an AI agent inside what its user allowed. <a href="../../writing/ai-agent-hidden-instruction/">Read the post</a></li><li><strong class="kw">ZK-ALBA</strong>, an <strong class="kw">encrypted SIEM</strong> and <strong class="kw">FRESCO</strong> (in preparation): audit proofs bound to what each auditor may see, attack detection on encrypted logs shared by several companies, and freshness proofs for cloud services that scale up and down.</li></ul>
       <h2 id="h-how-i-work-on-each-one">How I work on each one</h2>
       <p>Find the gap in published designs, design the scheme, build the prototype, measure it on AWS or real data, and write the paper. All of them are with my supervisor, Prof. Somchart Fugkeaw, at SIIT.</p>
       <div class="p-note" role="note"><p>For work that is not published yet, I show the idea and what I built, not results. The full list is in the <a href="../../#research">Research section</a>.</p></div>

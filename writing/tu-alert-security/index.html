@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src &#39;self&#39; data:; font-src &#39;self&#39;; style-src &#39;self&#39;; style-src-attr &#39;unsafe-inline&#39;; script-src &#39;self&#39; &#39;sha256-+/hyjqNIFJl8sAhB7t/qHTwT18igFNDdtSFrgki/Eds=&#39;; connect-src &#39;self&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">
 <title>Security from day one in a student-built campus app · Singha Junchan</title>
-<meta name="description" content="How our two-person team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.">
+<meta name="description" content="How our team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.">
 <link rel="canonical" href="https://singhaju.github.io/writing/tu-alert-security/">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#070b14">
@@ -14,7 +14,7 @@
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Singha Junchan">
 <meta property="og:title" content="Security from day one in a student-built campus app · Singha Junchan">
-<meta property="og:description" content="How our two-person team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.">
+<meta property="og:description" content="How our team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.">
 <meta property="og:url" content="https://singhaju.github.io/writing/tu-alert-security/">
 <meta property="og:image" content="https://singhaju.github.io/writing/tu-alert-security/og.png">
 <meta property="og:image:width" content="1200">
@@ -24,7 +24,7 @@
 <meta property="article:author" content="Singha Junchan">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Security from day one in a student-built campus app · Singha Junchan">
-<meta name="twitter:description" content="How our two-person team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.">
+<meta name="twitter:description" content="How our team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.">
 <meta name="twitter:image" content="https://singhaju.github.io/writing/tu-alert-security/og.png">
 <meta name="twitter:image:alt" content="Security from day one in a student-built campus app. Singha Junchan.">
 <script data-font="../../assets/fonts/ibm-plex-sans-latin-400-normal.woff2">(function(){var d=document.documentElement;d.classList.add("js");var t;try{var q=new URLSearchParams(location.search).get("theme");t=(q==="light"||q==="dark")?q:localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}d.setAttribute("data-theme",t);window.__rvT=setTimeout(function(){d.classList.add("rv-off")},4000);var s=document.currentScript,f=s&&s.getAttribute("data-font");if(f&&location.protocol!=="file:"){var l=document.createElement("link");l.rel="preload";l.as="font";l.type="font/woff2";l.crossOrigin="anonymous";l.href=f;document.head.appendChild(l)}})();</script>
@@ -37,7 +37,7 @@
   "@context": "https://schema.org",
   "@type": "Article",
   "headline": "Security from day one in a student-built campus app",
-  "description": "How our two-person team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.",
+  "description": "How our team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.",
   "datePublished": "2026-10-18",
   "dateModified": "2026-10-18",
   "mainEntityOfPage": "https://singhaju.github.io/writing/tu-alert-security/",
@@ -86,8 +86,8 @@
     <nav class="nav" id="nav" aria-label="Primary">
       <ul>
         <li><a href="../../#experience">Experience</a></li>
-        <li><a href="../../#work">Work</a></li>
         <li><a href="../../#research">Research</a></li>
+        <li><a href="../../#projects">Projects</a></li>
         <li><a href="../../#credentials">Credentials</a></li>
         <li><a href="../../#writing">Writing</a></li>
         <li><a href="../../#contact">Contact</a></li>
@@ -101,6 +101,7 @@
     </div>
   </div>
 </header>
+
 <main id="main" tabindex="-1">
 <article class="post" id="top" aria-labelledby="post-h">
   <div class="wrap p-wrap">
@@ -108,11 +109,11 @@
     <header class="p-head">
       <p class="p-meta"><span>3 min read</span></p>
       <h1 id="post-h">Security from day one in a student-built campus app</h1>
-      <p class="p-sum">How our two-person team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.</p>
+      <p class="p-sum">How our team is building TU Alert for Thammasat University with roles, a second sign-in step for staff, data erasure tools and security scans on every change.</p>
       <ul class="tags p-tags"><li>Application security</li><li>TypeScript</li><li>Project</li></ul>
     </header>
     <div class="p-body">
-      <p>TU Alert lets students report a safety problem, such as a fallen tree, a fire or an accident, <strong class="kw">inside LINE</strong> with photos and a map pin, and sends it to the office that owns it. Thammasat University hired a two-person student team to build it; I am the tech lead: I lead the team, design the architecture and the security, and write code alongside my partner. It is <strong class="kw">launching soon</strong>.</p>
+      <p>TU Alert lets students report a safety problem, such as a fallen tree, a fire or an accident, <strong class="kw">inside LINE</strong> with photos and a map pin, and sends it to the office that owns it. Thammasat University hired a team to build it; I am the tech lead: I lead the team, design the architecture and the security, and write code too. It is <strong class="kw">launching soon</strong>.</p>
       <h2 id="h-four-roles">Four roles</h2>
       <p>Access is split into <strong class="kw">four roles</strong>, so a student and a staff member see different tools.</p>
       <h2 id="h-a-second-step-for-staff">A second step for staff</h2>

@@ -86,8 +86,8 @@
     <nav class="nav" id="nav" aria-label="Primary">
       <ul>
         <li><a href="../../#experience">Experience</a></li>
-        <li><a href="../../#work">Work</a></li>
         <li><a href="../../#research">Research</a></li>
+        <li><a href="../../#projects">Projects</a></li>
         <li><a href="../../#credentials">Credentials</a></li>
         <li><a href="../../#writing">Writing</a></li>
         <li><a href="../../#contact">Contact</a></li>
@@ -101,6 +101,7 @@
     </div>
   </div>
 </header>
+
 <main id="main" tabindex="-1">
 <article class="post" id="top" aria-labelledby="post-h">
   <div class="wrap p-wrap">
@@ -119,13 +120,13 @@
       <ul><li><strong class="kw">Check once, carefully.</strong> A hub verifies the caller. The sign-in strength depends on how sensitive the service is: single sign-on, then a one-time code, then a check of the request&#39;s context and risk, then a zero-knowledge proof for the most sensitive services.</li><li><strong class="kw">Check the policy too.</strong> Policies are stored on IPFS, and the hub checks them against a Merkle root held on a blockchain, so a changed policy is noticed.</li><li><strong class="kw">Issue a short-lived pass for one service.</strong> The caller gets a token that works only for that service, and only for a short time.</li><li><strong class="kw">Check the pass locally on every call.</strong> A sidecar next to each service checks the token through Envoy in Istio, with <strong class="kw">no network call</strong>.</li></ul>
       <p>If a policy is tampered with or a security event happens, FEDAC revokes <strong class="kw">only the tokens for the affected services</strong>, not every session.</p>
       <h2 id="h-what-i-built">What I built</h2>
-      <p>I am the 1st of 4 authors. I worked on the research design with the team and built the implementation in <strong class="kw">Go and Rust</strong>: the hub, the Envoy sidecar, four sign-in tiers including a Groth16 zero-knowledge verifier, targeted revocation and the blockchain anchoring. I also re-implemented three published designs (Heimdall, ZKP-CapBAC and Atalay) and compared them with FEDAC on AWS EKS.</p>
-      <p>On AWS EKS, the median authorization check took <strong class="kw"><mark class="hl">1.4 ms</mark></strong>, at about <strong class="kw">7,100 requests per second</strong>. The full comparison is in the paper, which is under review.</p>
+      <p>I am the first author. I worked on the research design with the team and built the implementation in <strong class="kw">Go and Rust</strong>: the hub, the Envoy sidecar, four sign-in tiers including a Groth16 zero-knowledge verifier, targeted revocation and the blockchain anchoring. I also re-implemented three published designs (Heimdall, ZKP-CapBAC and Atalay) and compared them with FEDAC on AWS EKS.</p>
+      <p>We compared FEDAC with the three designs on AWS EKS. The numbers are in the paper, which is under review.</p>
       <h2 id="h-limits">Limits</h2>
       <p>The first sign-in is still the slow step, so FEDAC suits services that call each other again and again. We tested it in one AWS region on a test blockchain, and the prototype signs private attributes but does not encrypt them yet.</p>
       <h2 id="h-what-i-took-from-it">What I took from it</h2>
       <p>Ask which checks must happen on every request and which can happen once. Strong checks and fast requests can live together if the slow work is done once and its result travels as a short-lived, narrow pass.</p>
-      <div class="p-note" role="note"><p>FEDAC is under review at IEEE TDSC. I am the 1st of 4 authors, with two fellow students and Prof. Somchart Fugkeaw. More on the <a href="../../work/fedac/">FEDAC case page</a>.</p></div>
+      <div class="p-note" role="note"><p>FEDAC is under review at IEEE TDSC. I am the first author, supervised by Prof. Somchart Fugkeaw. More on the <a href="../../work/fedac/">FEDAC case page</a>.</p></div>
     </div>
     <p class="c-back c-back-end"><a href="../../#writing"><svg class="ic " viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg><span>Back to all writing</span></a></p>
   </div>
