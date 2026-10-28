@@ -1520,6 +1520,21 @@
       window.addEventListener('load', geometry);
       if (wide && wide.addEventListener) wide.addEventListener('change', function () { geometry(); decide(); });
     });
+    // r12: a long smooth scroll can end a little off when the layout above the target moves (late images, fonts). Check where the
+    // chapter landed and nudge it into place, unless the reader has started to scroll on their own.
+    var settleTimers = [];
+    function stopSettle() { settleTimers.forEach(clearTimeout); settleTimers = []; }
+    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (t) { window.addEventListener(t, stopSettle, { passive: true }); });
+    function settleOn(el) {
+      stopSettle();
+      [700, 1400, 2300].forEach(function (ms) {
+        settleTimers.push(setTimeout(function () {
+          var want = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+          var off = el.getBoundingClientRect().top - want;
+          if (Math.abs(off) > 3) window.scrollBy({ top: off, behavior: 'auto' });
+        }, ms));
+      });
+    }
     // links to a chapter (rail, "Next:" links, status rows): scroll, focus the heading, update the address
     doc.addEventListener('click', function (e) {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -1530,6 +1545,7 @@
       if (!el || !el.classList.contains('chapter') || !el.closest('.rail-main')) return;
       e.preventDefault();
       el.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
+      settleOn(el);
       var h = $('.ch-h, .st-title', el);
       if (h) { try { h.focus({ preventScroll: true }); } catch (err) { h.focus(); } }
       if (history.replaceState) { try { history.replaceState(history.state, '', '#' + id); } catch (err) { /* file: or sandboxed */ } }
@@ -1594,24 +1610,15 @@
   })();
 
   /* ---------- v10: one scroll = one page ----------
-     Snapping is switched on (class "snap" on <html>) only on windows of 1100x640 or more, and only while every page fits the window,
-     so that a page taller than the window never traps the wheel. Smaller windows and phones scroll freely. */
+     Snapping is switched on (class "snap" on <html>) on windows of 1100x640 or more. A page taller than the window is still scrolled
+     through freely (a snap area larger than the window has a snap position at every offset where it covers the window), then the
+     next page snaps in. Smaller windows and phones scroll freely. r12: the old "every page must fit" test is gone: on a 1920x1090
+     window one tall topic page was enough to switch snapping off for the whole site. */
   (function () {
     var wide = window.matchMedia('(min-width:1100px) and (min-height:640px)');
-    var timer = 0;
-    function fit() {
-      var ok = wide.matches;
-      if (ok) {
-        var vh = window.innerHeight + 6;
-        $$('section.screen:not(.rail-sec), .rail-sec .chapter').forEach(function (p) { if (p.offsetHeight > vh) ok = false; });
-      }
-      root.classList.toggle('snap', ok);
-    }
-    function later() { clearTimeout(timer); timer = setTimeout(fit, 160); }
+    function fit() { root.classList.toggle('snap', wide.matches); }
     fit();
-    window.addEventListener('load', fit);
-    window.addEventListener('resize', later, { passive: true });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    if (wide.addEventListener) wide.addEventListener('change', fit); else if (wide.addListener) wide.addListener(fit);
   })();
 
   /* ---------- r10: category diagrams (.cv). Without JavaScript or with reduced motion the complete picture shows. Otherwise the figure
