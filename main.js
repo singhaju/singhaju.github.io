@@ -244,22 +244,118 @@
       });
       if (list.length) byPage.push({ pg: pg, list: list });
     });
-    var show = function (el) { el.classList.add('rv-in'); };
+    var show = function (el) { el.classList.remove('rv-out'); el.classList.add('rv-in'); };
+    // r9: blocks come in AND go out. A block that leaves the window (a little before its last pixel) fades away toward the side it left by,
+    // and plays its arrival again when it comes back. The blocks that arrive together get 0, 1, 2 ... as their stagger index.
     var io = new IntersectionObserver(function (entries) {
+      var arriving = [];
       entries.forEach(function (en) {
-        if (en.isIntersecting || en.boundingClientRect.top < 0) { show(en.target); io.unobserve(en.target); }
+        var el = en.target;
+        if (en.isIntersecting) { if (!el.classList.contains('rv-in')) arriving.push(en); }
+        else if (el.classList.contains('rv-in')) {
+          var above = en.rootBounds ? en.boundingClientRect.top < en.rootBounds.top : en.boundingClientRect.top < 0;
+          el.style.setProperty('--rv-dy', above ? -1 : 1);
+          el.classList.remove('rv-in');
+          el.classList.add('rv-out');
+        }
       });
-    }, { threshold: 0.01 });
+      arriving.sort(function (a, b) { return (a.boundingClientRect.top - b.boundingClientRect.top) || (a.boundingClientRect.left - b.boundingClientRect.left); });
+      arriving.forEach(function (en, k) { en.target.style.setProperty('--rv-i', Math.min(k, 8)); show(en.target); });
+    }, { rootMargin: '-3% 0px -3% 0px', threshold: 0 });
     var pio = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
         pio.unobserve(en.target);
         var rec = byPage.filter(function (b) { return b.pg === en.target; })[0];
-        if (rec) setTimeout(function () { rec.list.forEach(function (el) { if (!el.classList.contains('rv-in')) { show(el); io.unobserve(el); } }); }, 1400);
+        if (rec) setTimeout(function () { rec.list.forEach(function (el) { if (!el.classList.contains('rv-in') && !el.classList.contains('rv-out')) show(el); }); }, 1400);
       });
     }, { threshold: 0.6 });
     byPage.forEach(function (b) { b.list.forEach(function (el) { io.observe(el); }); pio.observe(b.pg); });
     onReduce.push(function () { byPage.forEach(function (b) { b.list.forEach(show); }); });
+  })();
+
+  /* ---------- r9: skill cards show as many chips as fit ----------
+     The page holds every chip of a card; the ones past a fixed budget carry .sk6-x and stay hidden (that is what shows without
+     JavaScript and on small screens). On a wide, tall window the cards have a fixed height, so the chips are shown until the
+     card is full and the "+N" chip counts what is left. */
+  (function () {
+    var cards = $$('.sk6-c');
+    if (!cards.length) return;
+    var wide = window.matchMedia('(min-width: 1100px) and (min-height: 640px)');
+    var setMore = function (more, n) {
+      if (!more) return;
+      var a = more.querySelector('a');
+      more.hidden = n < 1;
+      if (a) { a.textContent = '+' + n; a.setAttribute('aria-label', (a.getAttribute('aria-label') || '').replace(/\+\d+/, '+' + n)); }
+    };
+    var grid = document.querySelector('.sk6');
+    var fit = function () {
+      if (grid) grid.classList.toggle('sk6-fit', wide.matches);
+      cards.forEach(function (c) {
+        var ul = c.querySelector('.sk6-l');
+        if (!ul) return;
+        var chips = [].slice.call(ul.querySelectorAll('li:not(.sk6-more)')), more = ul.querySelector('.sk6-more');
+        if (!wide.matches) {
+          var staticHidden = 0;
+          chips.forEach(function (li) { var x = li.classList.contains('sk6-x'); li.hidden = x; if (x) staticHidden++; });
+          setMore(more, staticHidden);
+          return;
+        }
+        // greedy fill in order: a chip that does not fit is skipped (a shorter one after it may still fit), then "+N" is added
+        // layout offsets, not scrollHeight: the pop-in animation of a chip is a transform and would inflate scrollHeight
+        var padB = parseFloat(getComputedStyle(ul).paddingBottom) || 0;
+        var over = function () {
+          var low = 0;
+          [].forEach.call(ul.children, function (li) { if (!li.hidden) low = Math.max(low, li.offsetTop + li.offsetHeight); });
+          return low > ul.clientHeight - padB + 1;
+        };
+        // greedy fill in order: a chip that does not fit is skipped (a shorter one after it may still fit).
+        // Pass 1 tries to show every chip; if some do not fit, pass 2 refills with the "+N" chip reserved at the end.
+        var fill = function (reserve) {
+          chips.forEach(function (li) { li.hidden = true; });
+          if (more) { more.hidden = !reserve; if (reserve) setMore(more, chips.length); }
+          var n = 0;
+          chips.forEach(function (li) {
+            li.hidden = false;
+            if (over()) li.hidden = true; else n++;
+          });
+          return n;
+        };
+        var shownN = fill(false);
+        if (shownN < chips.length && more) {
+          shownN = fill(true);
+          setMore(more, chips.length - shownN);
+          if (shownN < 1) { chips[0].hidden = false; }
+        }
+      });
+    };
+    var t;
+    window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fit, 120); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    fit();
+  })();
+
+  /* ---------- r9: scenes. Each page gets .is-on while at least about 40% of it (or half a window of it) is on screen and loses it again
+     when less than about 8% is left. CSS hangs the "scenes" on it (the TU Alert phones fan out from one, the skill chips pop in, the
+     figures settle). html.sa-on turns the hidden start states on; without JavaScript, without IntersectionObserver or with reduced
+     motion it is never set, so everything shows in its final place. ---------- */
+  (function () {
+    if (!hasIO || reduced) return;
+    var pages = $$('section.screen:not(.hero), .rail-sec .chapter');
+    if (!pages.length) return;
+    var th = []; for (var i = 0; i <= 20; i++) th.push(i / 20);
+    var sio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var root = en.rootBounds ? en.rootBounds.height : window.innerHeight;
+        var seen = en.intersectionRect.height;
+        var on = en.target.classList.contains('is-on');
+        var want = on ? seen > Math.min(en.boundingClientRect.height * 0.08, root * 0.08) : seen >= Math.min(en.boundingClientRect.height * 0.4, root * 0.5);
+        if (want !== on) en.target.classList.toggle('is-on', want);
+      });
+    }, { threshold: th });
+    pages.forEach(function (pg) { sio.observe(pg); });
+    document.documentElement.classList.add('sa-on');
+    onReduce.push(function () { sio.disconnect(); document.documentElement.classList.remove('sa-on'); });
   })();
 
   /* ---------- staggered entrance (bento tiles, the 'what makes it new' cards, the work impact cards): the grid gets .in once, CSS staggers the children ---------- */
@@ -1516,6 +1612,22 @@
     window.addEventListener('load', fit);
     window.addEventListener('resize', later, { passive: true });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  })();
+
+  /* ---------- r10: category diagrams (.cv). Without JavaScript or with reduced motion the complete picture shows. Otherwise the figure
+     gets .cv-js (hidden start state) and .in while it is mostly on screen; CSS plays the story once per visit and again on return. ---------- */
+  (function () {
+    var figs = $$('.cv');
+    if (!figs.length || !hasIO || reduced) return;
+    var cio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var on = en.target.classList.contains('in');
+        var want = on ? en.intersectionRatio > 0 : en.intersectionRatio >= 0.35;
+        if (want !== on) en.target.classList.toggle('in', want);
+      });
+    }, { threshold: [0, 0.35, 0.6] });
+    figs.forEach(function (f) { f.classList.add('cv-js'); cio.observe(f); });
+    onReduce.push(function () { cio.disconnect(); figs.forEach(function (f) { f.classList.remove('cv-js', 'in'); }); });
   })();
 
 })();
